@@ -74,8 +74,10 @@ result = await agent.run('Use my_tool with x=5')
 
 ## Pydantic Logfire統合
 
-Pydantic AIは[Pydantic Logfire](https://logfire.pydantic.dev/)をサポートしています。
-pydantic-claude-cliでも、Pydantic AIのインストルメンテーション機能を利用できます。
+**pydantic-claude-cliはPydantic Logfireに完全対応しています！**
+
+`ClaudeCodeCLIModel`がPydantic AIの`Model`抽象クラスを実装しているため、
+`logfire.instrument_pydantic_ai()`が**自動的に動作**します。追加の設定は不要です。
 
 ### セットアップ
 
@@ -117,10 +119,13 @@ result = await agent.run('Calculate 5 + 3')
 ```
 
 Logfireダッシュボードで以下が確認できます：
-- Agent実行のトレース
-- ツール呼び出しの詳細
-- レイテンシ情報
-- エラーの詳細
+- **Agent実行のトレース** - agent runスパン
+- **モデルリクエスト** - chatスパン（モデル名、トークン使用量等）
+- **カスタムツール呼び出し** - tool executionスパン（引数、結果等）
+- **レイテンシ情報** - 各ステップの実行時間
+- **エラーの詳細** - スタックトレース、エラーメッセージ
+
+**動作確認済み**: ClaudeCodeCLIModelでカスタムツール使用時も完全にトレースされます。
 
 ---
 
