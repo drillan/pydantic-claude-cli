@@ -22,6 +22,8 @@ Pydantic AI モデルプロバイダーを提供します。
 
 how-it-works
 architecture
+comparison-with-pydantic-ai
+custom-tools-explained
 ```
 
 ## クイックスタート
