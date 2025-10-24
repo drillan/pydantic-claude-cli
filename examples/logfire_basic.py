@@ -26,6 +26,7 @@ except ImportError:
     exit(1)
 
 from pydantic_ai import Agent
+
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
 
@@ -43,7 +44,7 @@ async def main() -> None:
 
     # テスト用: 実際には送信しない（send_to_logfire=False）
     # 本番環境では send_to_logfire=True（デフォルト）にする
-    logfire.configure(send_to_logfire=False)  # Falseでローカルテスト
+    logfire.configure(send_to_logfire=True)  # Falseでローカルテスト
     print("  ✓ Logfire設定完了（send_to_logfire=False, テストモード）")
     print()
 

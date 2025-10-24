@@ -27,6 +27,7 @@ except ImportError:
 
 from pydantic import BaseModel
 from pydantic_ai import Agent
+
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
 
@@ -48,7 +49,7 @@ async def main() -> None:
 
     # Logfire設定
     print("Logfireを設定中...")
-    logfire.configure(send_to_logfire=False)  # テストモード
+    logfire.configure(send_to_logfire=True)  # テストモード
     logfire.instrument_pydantic_ai()
     print("✓ Logfireインストルメンテーション有効化")
     print()

@@ -82,14 +82,21 @@ result = await agent.run('Use my_tool with x=5')
 ### セットアップ
 
 ```bash
-# Logfireをインストール
+# ステップ1: Logfireをインストール
 pip install logfire
 
-# 認証
+# ステップ2: 認証
 logfire auth
 
-# プロジェクト作成
+# ステップ3: プロジェクト設定
+# 新規プロジェクトの場合:
 logfire projects new
+
+# 既存プロジェクトを使用する場合:
+logfire projects use <project-name>
+
+# 確認
+ls .logfire/  # logfire_credentials.json が作成される
 ```
 
 ### 使用方法

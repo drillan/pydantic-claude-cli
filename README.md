@@ -6,17 +6,16 @@
 
 ## 特徴
 
-- ✅ **APIキー不要** - Claude Code CLIで認証
 - ✅ **簡単統合** - Pydantic AIモデルのドロップイン置き換え
 - ✅ **テキストベース会話** - テキストチャットを完全サポート
 - ✅ **カスタムツール** - 依存性なしツールを完全サポート（v0.2+）
-- ⚠️ **マルチモーダル** - 画像/ファイル未対応（近日対応予定）
+- ⚠️ **マルチモーダル** - 画像/ファイル未対応
 
 ## 必要要件
 
 1. **Node.js** - Claude Code CLIに必要
 2. **Claude Code CLI** - インストールと認証が必要
-3. **Python 3.10+** - Pydantic AI実行用
+3. **Python 3.13+** - Pydantic AI実行用
 
 ## インストール
 
@@ -97,7 +96,7 @@ model = ClaudeCodeCLIModel(
 
 ### カスタムツールの使用（v0.2+）
 
-依存性なしツール（`@agent.tool_plain`）が**完全に動作します**：
+依存性なしツール（`@agent.tool_plain`）が動作します：
 
 ```python
 from pydantic_ai import Agent
@@ -135,7 +134,7 @@ print(result.output)
 - ✅ 実際のツール呼び出し確認済み
 
 **制限事項**:
-- ⚠️ `RunContext`依存ツール（`@agent.tool`）は未サポート（Phase 3で予定）
+- ⚠️ `RunContext`依存ツール（`@agent.tool`）は未サポート
 - ⚠️ Agent作成後に`set_agent_toolsets()`の手動呼び出しが必要
 
 詳細は：
@@ -203,18 +202,6 @@ Claude Code CLIがサポートするすべてのClaudeモデルを使用でき�
 - ✅ **エラーハンドリング** - 包括的なエラーメッセージ
 - ✅ **使用量トラッキング** - トークン使用量とコスト情報
 - ✅ **ロギング** - 標準ライブラリlogging、Pydantic Logfire対応
-
-## 動作の仕組み
-
-標準のAnthropic API統合とは異なり、`pydantic-claude-cli`はClaude Code CLIをサブプロセスとして使用します：
-
-1. `ClaudeCodeCLIModel`インスタンスを作成
-2. クエリ実行時、Claude CLIをサブプロセスとして起動
-3. stdin/stdoutを介してJSONでメッセージ交換
-4. CLIがClaude Codeログインを使用して認証を処理
-5. レスポンスをPydantic AI形式に変換
-
-**APIキー不要** - Claude Code CLIが認証を処理するため！
 
 ## トラブルシューティング
 
@@ -313,26 +300,6 @@ uv run pytest --cov=pydantic_claude_cli
 uv run pytest tests/test_model.py -v
 ```
 
-## コントリビューション
-
-コントリビューション歓迎！改善が必要な領域：
-
-- 🔧 ストリーミングレスポンス対応
-- 🔧 カスタムツール統合
-- 🔧 マルチモーダルコンテンツ対応
-- 🔧 より良いエラーメッセージ
-- 📚 さらなる例とドキュメント
-
-## ライセンス
-
-MITライセンス - 詳細はLICENSEファイルをご覧ください。
-
-## 謝辞
-
-- Pydanticによる[Pydantic AI](https://ai.pydantic.dev/)をベースに構築
-- Anthropicによる[Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)を使用
-- APIキー不要のClaude アクセスの必要性に触発されて開発
-
 ## 関連プロジェクト
 
 - [Pydantic AI](https://github.com/pydantic/pydantic-ai) - メインのPydantic AIフレームワーク
@@ -341,4 +308,4 @@ MITライセンス - 詳細はLICENSEファイルをご覧ください。
 
 ---
 
-**注意**: これは独立したプロジェクトであり、AnthropicやPydanticとは公式に提携していません。
+**注意**: これは独立したプロジェクトであり、AnthropicやPydanticとは関係ありません
