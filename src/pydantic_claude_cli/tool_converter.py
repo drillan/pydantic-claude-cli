@@ -65,7 +65,9 @@ def extract_python_types(json_schema: dict[str, Any]) -> dict[str, type]:
         if json_type not in type_map:
             # 不明な型の場合は警告してstrにフォールバック
             logger.warning(
-                "Unknown JSON type '%s' for parameter '%s', using str as fallback", json_type, prop_name
+                "Unknown JSON type '%s' for parameter '%s', using str as fallback",
+                json_type,
+                prop_name,
             )
             result[prop_name] = str
         else:
@@ -192,13 +194,18 @@ def create_mcp_from_tools(
     # MCPサーバー作成
     # NOTE: 修正版create_fixed_sdk_mcp_server()を使用
     # claude-code-sdkの既知のバグ（Issue #6710）を回避
-    logger.info("Creating MCP server 'pydantic-custom-tools' with %d tools", len(sdk_tools))
+    logger.info(
+        "Creating MCP server 'pydantic-custom-tools' with %d tools", len(sdk_tools)
+    )
 
     server = create_fixed_sdk_mcp_server(
         name="pydantic-custom-tools", version="1.0.0", tools=sdk_tools
     )
 
-    logger.info("MCP server created successfully: type=%s, name=%s", server.get("type"), server.get("name"))
-
+    logger.info(
+        "MCP server created successfully: type=%s, name=%s",
+        server.get("type"),
+        server.get("name"),
+    )
 
     return cast(McpSdkServerConfig, server)

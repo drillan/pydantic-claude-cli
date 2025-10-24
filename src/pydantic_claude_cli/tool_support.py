@@ -168,7 +168,9 @@ def extract_tools_from_agent(
         logger.debug("Tool '%s' extracted successfully", tool_def.name)
 
     logger.info(
-        "Extracted %d tools from agent (has_context_tools=%s)", len(tools_with_funcs), has_context_tools
+        "Extracted %d tools from agent (has_context_tools=%s)",
+        len(tools_with_funcs),
+        has_context_tools,
     )
 
     return tools_with_funcs, has_context_tools

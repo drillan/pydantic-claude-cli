@@ -212,7 +212,9 @@ class ClaudeCodeCLIModel(Model):
 
             # MCPサーバー作成
             if tools_with_funcs:
-                logger.info("Creating MCP server for %d custom tools", len(tools_with_funcs))
+                logger.info(
+                    "Creating MCP server for %d custom tools", len(tools_with_funcs)
+                )
                 mcp_server = create_mcp_from_tools(tools_with_funcs)
                 logger.debug("MCP server created successfully")
 
@@ -234,7 +236,6 @@ class ClaudeCodeCLIModel(Model):
                 f"mcp__{mcp_server_name}__{tool.name}"
                 for tool in (model_request_parameters.function_tools or [])
             ]
-
 
         # MCPツールの許可設定
         # MCPツールは "mcp__{server_name}__{tool_name}" の形式で参照される
@@ -276,7 +277,9 @@ class ClaudeCodeCLIModel(Model):
                     await client.query(prompt)
                     async for message in client.receive_response():
                         response_messages.append(message)
-                logger.debug("Received %d messages from ClaudeSDKClient", len(response_messages))
+                logger.debug(
+                    "Received %d messages from ClaudeSDKClient", len(response_messages)
+                )
             else:
                 # query()を使用（通常動作）
                 logger.debug("Using query() for standard request")

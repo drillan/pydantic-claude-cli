@@ -55,7 +55,9 @@ async def main() -> None:
 
     # モデルとAgent
     model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
-    agent = Agent(model, instructions="ツールを使って計算してください。日本語で回答してください。")
+    agent = Agent(
+        model, instructions="ツールを使って計算してください。日本語で回答してください。"
+    )
 
     # toolsets設定
     model.set_agent_toolsets(agent._function_toolset)
@@ -94,7 +96,10 @@ async def main() -> None:
         discounted = amount * (1 - discount_rate)
 
         logfire.info(
-            "apply_discount called", amount=amount, discount_rate=discount_rate, result=discounted
+            "apply_discount called",
+            amount=amount,
+            discount_rate=discount_rate,
+            result=discounted,
         )
 
         return discounted

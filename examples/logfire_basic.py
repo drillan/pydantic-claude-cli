@@ -90,8 +90,12 @@ async def main() -> None:
     usage = result.usage()
     print("使用量:")
     print(f"  - リクエスト: {usage.requests}")
-    print(f"  - 入力トークン: {usage.input_tokens if hasattr(usage, 'input_tokens') else 'N/A'}")
-    print(f"  - 出力トークン: {usage.output_tokens if hasattr(usage, 'output_tokens') else 'N/A'}")
+    print(
+        f"  - 入力トークン: {usage.input_tokens if hasattr(usage, 'input_tokens') else 'N/A'}"
+    )
+    print(
+        f"  - 出力トークン: {usage.output_tokens if hasattr(usage, 'output_tokens') else 'N/A'}"
+    )
     print()
 
     print("=" * 70)
