@@ -14,7 +14,6 @@ from claude_code_sdk.types import (
 from pydantic_ai.messages import (
     ModelRequest,
     ModelResponse,
-    ModelResponsePart,
     SystemPromptPart,
     TextPart,
     ThinkingPart,
@@ -66,7 +65,7 @@ def convert_to_claude_prompt(messages: list[ModelRequest | ModelResponse]) -> st
                     )
         elif isinstance(message, ModelResponse):
             # Model responses in the history - extract text
-            for part in message.parts:
+            for part in message.parts:  # type: ignore[assignment]
                 if isinstance(part, TextPart):
                     prompt_parts.append(f"Assistant: {part.content}")
                 elif isinstance(part, ThinkingPart):
@@ -108,7 +107,7 @@ def convert_from_claude_message(
     Raises:
         MessageConversionError: If message conversion fails.
     """
-    parts: list[ModelResponsePart] = []
+    parts: list[Any] = []  # 型を緩和（TextPart, ToolCallPart, ToolReturnPart等の混在）
 
     for block in message.content:
         if isinstance(block, TextBlock):
@@ -169,16 +168,17 @@ def extract_usage_from_result(result_data: dict[str, Any]) -> RequestUsage:
     usage_dict = result_data.get("usage", {})
 
     # Claude SDK provides usage in Anthropic format
+    # Note: RequestUsageのパラメータ名が変更されました
+    input_tokens = usage_dict.get("input_tokens", 0)
+    output_tokens = usage_dict.get("output_tokens", 0)
+
     return RequestUsage(
-        request_tokens=usage_dict.get("input_tokens", 0),
-        response_tokens=usage_dict.get("output_tokens", 0),
-        total_tokens=usage_dict.get("input_tokens", 0)
-        + usage_dict.get("output_tokens", 0),
-        # Additional details
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        # Additional details（intのみを含める）
         details={
             "duration_ms": result_data.get("duration_ms", 0),
             "duration_api_ms": result_data.get("duration_api_ms", 0),
             "num_turns": result_data.get("num_turns", 0),
-            "total_cost_usd": result_data.get("total_cost_usd"),
         },
     )

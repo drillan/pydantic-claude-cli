@@ -31,7 +31,10 @@ class TestExtractPythonTypes:
 
     def test_extracts_complex_types(self) -> None:
         """複雑な型を抽出する"""
-        pytest.skip("Implementation pending")
+        schema = {"type": "object", "properties": {"items": {"type": "array"}, "data": {"type": "object"}}}
+
+        result = extract_python_types(schema)
+        assert result == {"items": list, "data": dict}
 
         # schema = {
         #     "type": "object",
@@ -49,7 +52,9 @@ class TestExtractPythonTypes:
 
     def test_handles_empty_schema(self) -> None:
         """空のスキーマを処理する"""
-        pytest.skip("Implementation pending")
+        schema = {"type": "object", "properties": {}}
+        result = extract_python_types(schema)
+        assert result == {}
 
         # schema = {"type": "object", "properties": {}}
         # result = extract_python_types(schema)
@@ -57,7 +62,9 @@ class TestExtractPythonTypes:
 
     def test_handles_missing_properties(self) -> None:
         """propertiesがないスキーマを処理する"""
-        pytest.skip("Implementation pending")
+        schema = {"type": "object"}
+        result = extract_python_types(schema)
+        assert result == {}
 
         # schema = {"type": "object"}
         # result = extract_python_types(schema)
@@ -88,7 +95,8 @@ class TestFormatToolResult:
 
     def test_formats_integer_result(self) -> None:
         """整数結果をMCP形式に変換する"""
-        pytest.skip("Implementation pending")
+        result = format_tool_result(42)
+        assert result == {"content": [{"type": "text", "text": "42"}]}
 
         # result = format_tool_result(42)
         # assert result == {
@@ -104,7 +112,9 @@ class TestFormatToolResult:
 
     def test_preserves_mcp_format(self) -> None:
         """既にMCP形式の結果はそのまま返す"""
-        pytest.skip("Implementation pending")
+        mcp_result = {"content": [{"type": "text", "text": "Test"}], "is_error": False}
+        result = format_tool_result(mcp_result)
+        assert result == mcp_result
 
         # mcp_result = {
         #     "content": [{"type": "text", "text": "Test"}],
@@ -115,7 +125,8 @@ class TestFormatToolResult:
 
     def test_handles_none_result(self) -> None:
         """None結果を処理する"""
-        pytest.skip("Implementation pending")
+        result = format_tool_result(None)
+        assert result["content"][0]["text"] == "None"
 
         # result = format_tool_result(None)
         # assert result["content"][0]["text"] == "None"

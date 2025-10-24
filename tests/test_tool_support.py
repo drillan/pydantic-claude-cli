@@ -5,12 +5,7 @@ Article 3 (テストファースト) に従って、実装前にテストを作�
 
 import pytest
 
-# NOTE: 実装前なので、importは後で追加
-# from pydantic_claude_cli.tool_support import (
-#     requires_run_context,
-#     find_tool_function,
-#     extract_tools_from_agent
-# )
+from pydantic_claude_cli.tool_support import requires_run_context
 
 
 class TestRequiresRunContext:
@@ -30,7 +25,11 @@ class TestRequiresRunContext:
 
     def test_detects_no_run_context(self) -> None:
         """RunContextパラメータを持たない関数を検出する"""
-        pytest.skip("Implementation pending")
+
+        def tool_without_context(x: int, y: int) -> int:
+            return x + y
+
+        assert requires_run_context(tool_without_context) is False
 
         # def tool_without_context(x: int, y: int) -> int:
         #     return x + y
@@ -39,7 +38,12 @@ class TestRequiresRunContext:
 
     def test_detects_generic_run_context(self) -> None:
         """Generic RunContext[T]を検出する"""
-        pytest.skip("Implementation pending")
+        from pydantic_ai.tools import RunContext
+
+        async def tool_with_generic_context(ctx: RunContext[dict], value: str) -> str:
+            return value
+
+        assert requires_run_context(tool_with_generic_context) is True
 
         # from pydantic_ai.tools import RunContext
         #
@@ -50,7 +54,11 @@ class TestRequiresRunContext:
 
     def test_handles_no_type_annotations(self) -> None:
         """型アノテーションがない関数を処理する"""
-        pytest.skip("Implementation pending")
+
+        def tool_no_annotations(x, y):  # type: ignore[no-untyped-def]
+            return x + y
+
+        assert requires_run_context(tool_no_annotations) is False
 
         # def tool_no_annotations(x, y):
         #     return x + y
