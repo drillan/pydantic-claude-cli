@@ -8,12 +8,16 @@ claude-code-sdkのcreate_sdk_mcp_server()にバグがあるため、
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 from claude_code_sdk import SdkMcpTool
 from claude_code_sdk.types import McpSdkServerConfig
 from mcp.server import Server
 from mcp.types import TextContent, Tool
+
+# ロガーを設定
+logger = logging.getLogger(__name__)
 
 
 def create_fixed_sdk_mcp_server(
@@ -39,10 +43,12 @@ def create_fixed_sdk_mcp_server(
         - list_toolsハンドラーの実装
     """
     # MCPサーバーインスタンスを作成
+    logger.debug("Creating MCP Server instance: name=%s, version=%s", name, version)
     server = Server(name, version=version)
 
     # ツールを登録
     if tools:
+        logger.debug("Registering %d tools with MCP server", len(tools))
         # ツールマップを作成
         tool_map: dict[str, SdkMcpTool[Any]] = {
             tool_def.name: tool_def for tool_def in tools

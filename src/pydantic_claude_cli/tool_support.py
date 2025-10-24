@@ -12,11 +12,15 @@
 from __future__ import annotations
 
 import inspect
+import logging
 from typing import Any, Callable
 
 from pydantic_ai.models import ModelRequestParameters
 from pydantic_ai.toolsets import AbstractToolset
 from pydantic_ai.tools import RunContext, ToolDefinition
+
+# ロガーを設定
+logger = logging.getLogger(__name__)
 
 
 def requires_run_context(func: Callable[..., Any]) -> bool:
@@ -148,12 +152,23 @@ def extract_tools_from_agent(
         if func is None:
             # 関数が見つからない場合はスキップ
             # NOTE: set_agent_toolsets()が呼び出されていない可能性
+            logger.warning(
+                "Tool function not found for '%s'. "
+                "Make sure to call model.set_agent_toolsets(agent._function_toolset)",
+                tool_def.name,
+            )
             continue
 
         # RunContext依存性をチェック
         if requires_run_context(func):
             has_context_tools = True
+            logger.debug("Tool '%s' requires RunContext", tool_def.name)
 
         tools_with_funcs.append((tool_def, func))
+        logger.debug("Tool '%s' extracted successfully", tool_def.name)
+
+    logger.info(
+        "Extracted %d tools from agent (has_context_tools=%s)", len(tools_with_funcs), has_context_tools
+    )
 
     return tools_with_funcs, has_context_tools

@@ -12,7 +12,7 @@ claude_code_sdkのMCPツール形式に変換する機能を提供します。
 from __future__ import annotations
 
 import inspect
-import warnings
+import logging
 from typing import Any, Callable, cast
 
 from claude_code_sdk import tool as sdk_tool
@@ -20,6 +20,9 @@ from claude_code_sdk.types import McpSdkServerConfig
 from pydantic_ai.tools import ToolDefinition
 
 from .mcp_server_fixed import create_fixed_sdk_mcp_server
+
+# ロガーを設定
+logger = logging.getLogger(__name__)
 
 
 def extract_python_types(json_schema: dict[str, Any]) -> dict[str, type]:
@@ -61,10 +64,8 @@ def extract_python_types(json_schema: dict[str, Any]) -> dict[str, type]:
 
         if json_type not in type_map:
             # 不明な型の場合は警告してstrにフォールバック
-            warnings.warn(
-                f"Unknown JSON type '{json_type}' for parameter '{prop_name}', using str as fallback",
-                UserWarning,
-                stacklevel=2,
+            logger.warning(
+                "Unknown JSON type '%s' for parameter '%s', using str as fallback", json_type, prop_name
             )
             result[prop_name] = str
         else:
@@ -191,21 +192,13 @@ def create_mcp_from_tools(
     # MCPサーバー作成
     # NOTE: 修正版create_fixed_sdk_mcp_server()を使用
     # claude-code-sdkの既知のバグ（Issue #6710）を回避
-    warnings.warn(
-        f"Creating FIXED MCP server 'pydantic-custom-tools' with {len(sdk_tools)} SDK tools",
-        UserWarning,
-        stacklevel=2,
-    )
+    logger.info("Creating MCP server 'pydantic-custom-tools' with %d tools", len(sdk_tools))
 
     server = create_fixed_sdk_mcp_server(
         name="pydantic-custom-tools", version="1.0.0", tools=sdk_tools
     )
 
-    # サーバーの内容を確認
-    warnings.warn(
-        f"FIXED MCP server created: type={server.get('type')}, name={server.get('name')}",
-        UserWarning,
-        stacklevel=2,
-    )
+    logger.info("MCP server created successfully: type=%s, name=%s", server.get("type"), server.get("name"))
+
 
     return cast(McpSdkServerConfig, server)

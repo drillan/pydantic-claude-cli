@@ -23,6 +23,7 @@ Pydantic AI モデルプロバイダーを提供します。
 
 user-guide
 custom-tools
+logging
 comparison-with-pydantic-ai
 ```
 

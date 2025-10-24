@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
@@ -30,6 +31,9 @@ from .message_converter import (
     extract_usage_from_result,
 )
 from .provider import ClaudeCodeCLIProvider
+
+# ロガーを設定
+logger = logging.getLogger(__name__)
 
 
 @dataclass(init=False)
@@ -208,7 +212,9 @@ class ClaudeCodeCLIModel(Model):
 
             # MCPサーバー作成
             if tools_with_funcs:
+                logger.info("Creating MCP server for %d custom tools", len(tools_with_funcs))
                 mcp_server = create_mcp_from_tools(tools_with_funcs)
+                logger.debug("MCP server created successfully")
 
         # Convert messages
         try:
@@ -265,12 +271,15 @@ class ClaudeCodeCLIModel(Model):
 
             if mcp_server is not None:
                 # ClaudeSDKClientを使用（MCPツール対応）
+                logger.debug("Using ClaudeSDKClient for MCP tools support")
                 async with ClaudeSDKClient(options=options) as client:
                     await client.query(prompt)
                     async for message in client.receive_response():
                         response_messages.append(message)
+                logger.debug("Received %d messages from ClaudeSDKClient", len(response_messages))
             else:
                 # query()を使用（通常動作）
+                logger.debug("Using query() for standard request")
                 async for message in claude_query(prompt=prompt, options=options):
                     response_messages.append(message)
 
