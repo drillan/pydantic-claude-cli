@@ -288,6 +288,16 @@ uv run python examples/basic_usage.py
    - 非同期ツール
    - 複雑なデータ処理
 
+5. **`logfire_basic.py`** - Pydantic Logfire基本例
+   - Logfireインストルメンテーション
+   - トレースの確認
+   - テストモード（send_to_logfire=False）
+
+6. **`logfire_with_custom_tools.py`** - Logfire + カスタムツール
+   - カスタムツールのトレーシング
+   - ツール内でのlogfire.info()使用
+   - 複数ツール連携のトレース
+
 すべてのサンプルは実際に動作確認済みです。
 
 ### テスト実行
