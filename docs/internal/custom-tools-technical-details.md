@@ -1,258 +1,119 @@
-# カスタムツールの詳細説明
+# カスタムツール機能
 
-このドキュメントでは、Pydantic AI におけるカスタムツールの仕組みと、なぜ `pydantic-claude-cli` で未対応なのかを詳しく説明します。
+pydantic-claude-cliでのカスタムツールの使い方を説明します。
 
-## 目次
+```{contents}
+:depth: 2
+:local:
+```
 
-1. [カスタムツールとは](#カスタムツールとは)
-2. [Pydantic AI標準でのカスタムツール](#pydantic-ai標準でのカスタムツール)
-3. [なぜpydantic-claude-cliで未対応なのか](#なぜpydantic-claude-cliで未対応なのか)
-4. [技術的な障壁](#技術的な障壁)
-5. [代替案と回避策](#代替案と回避策)
-6. [将来の実装可能性](#将来の実装可能性)
-
----
-
-## カスタムツールとは
-
-### 概要
 
 カスタムツールは、LLMが特定のタスクを実行するために呼び出せる**ユーザー定義の関数**です。
 
-### 基本的な仕組み
-
-```
-1. ユーザーがツールを定義（Python関数）
-   ↓
-2. Pydantic AIがツールをJSON Schemaに変換
-   ↓
-3. スキーマをLLMに送信
-   ↓
-4. LLMが必要に応じてツールを呼び出す
-   ↓
-5. Pydantic AIがPython関数を実行
-   ↓
-6. 結果をLLMに返す
-   ↓
-7. LLMが最終的な応答を生成
-```
-
-### ユースケース例
-
-- **外部APIの呼び出し**: 天気情報、株価、検索等
-- **データベースクエリ**: ユーザー情報の取得、データの保存
-- **ファイル操作**: ファイルの読み書き、ディレクトリ操作
-- **計算処理**: 複雑な計算、データ変換
-- **外部サービス連携**: Slack送信、メール送信等
+pydantic-claude-cli v0.2+では、依存性なしツール（`@agent.tool_plain`）が**完全に動作します**。
 
 ---
 
-## Pydantic AI標準でのカスタムツール
+## サポートされる機能（v0.2+）
 
-### 基本的な使い方
+**基本的なツール**:
 
 ```python
-from pydantic_ai import Agent, RunContext
-from pydantic_ai.models.anthropic import AnthropicModel
+from pydantic_ai import Agent
+from pydantic_claude_cli import ClaudeCodeCLIModel
 
-model = AnthropicModel('claude-haiku-4-5')
+model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
 agent = Agent(model)
 
-# カスタムツールを定義
-@agent.tool
-async def get_weather(city: str) -> str:
-    """指定された都市の天気情報を取得します。
+# 重要: toolsetsを設定（必須）
+model.set_agent_toolsets(agent._function_toolset)
 
-    Args:
-        city: 天気を取得する都市名
+@agent.tool_plain
+def calculate(x: int, y: int) -> int:
+    """計算ツール"""
+    return x + y
 
-    Returns:
-        天気情報を含む文字列
-    """
-    # 実際のAPI呼び出し（簡略化）
-    return f"{city}の天気: 晴れ、気温22°C"
-
-# ツールを使用
-result = await agent.run('東京の天気を教えてください')
-print(result.output)
-# 出力例: "東京は晴れで、気温は22°Cです。"
+result = await agent.run('5 + 3を計算して')
+# LLMが自動的にcalculateツールを使用
 ```
 
-### 裏側で何が起きているか
-
-#### ステップ1: ツール定義の登録
+**Pydanticモデルを使ったツール**:
 
 ```python
-@agent.tool
-async def get_weather(city: str) -> str:
-    ...
+from pydantic import BaseModel
+
+class Item(BaseModel):
+    name: str
+    price: float
+
+@agent.tool_plain
+def get_total(items: list[Item]) -> float:
+    """合計金額を計算"""
+    return sum(item.price for item in items)
+
+result = await agent.run('3つの商品の合計を計算')
+# LLMがItemリストを生成してツールを呼び出す
 ```
 
-Pydantic AI は以下を実行：
-1. 関数のシグネチャを解析
-2. 型ヒント（`city: str`）からJSON Schemaを生成
-3. Docstringから説明を抽出
-4. ツール定義を内部リストに登録
-
-#### ステップ2: JSON Schema 生成
-
-```json
-{
-  "name": "get_weather",
-  "description": "指定された都市の天気情報を取得します。",
-  "parameters": {
-    "type": "object",
-    "properties": {
-      "city": {
-        "type": "string",
-        "description": "天気を取得する都市名"
-      }
-    },
-    "required": ["city"]
-  }
-}
-```
-
-#### ステップ3: LLMへの送信
-
-Anthropic API へのリクエスト：
+**非同期ツール**:
 
 ```python
-{
-  "model": "claude-haiku-4-5",
-  "messages": [
-    {"role": "user", "content": "東京の天気を教えてください"}
-  ],
-  "tools": [
-    {
-      "name": "get_weather",
-      "description": "...",
-      "input_schema": {...}
-    }
-  ]
-}
+@agent.tool_plain
+async def async_process(data: str) -> str:
+    """非同期処理"""
+    import asyncio
+    await asyncio.sleep(0.1)
+    return data.upper()
 ```
 
-#### ステップ4: LLMがツールを呼び出す
+#### 制限事項（Phase 1）
 
-Anthropic APIからのレスポンス：
-
-```json
-{
-  "role": "assistant",
-  "content": [
-    {
-      "type": "tool_use",
-      "id": "toolu_123",
-      "name": "get_weather",
-      "input": {
-        "city": "東京"
-      }
-    }
-  ]
-}
-```
-
-#### ステップ5: Pydantic AIがPython関数を実行
+**RunContext依存ツールは未サポート**:
 
 ```python
-# Pydantic AIが自動的に実行
-result = await get_weather(city="東京")
-# → "東京の天気: 晴れ、気温22°C"
+from pydantic_ai.tools import RunContext
+
+# ❌ このようなツールはエラーになります
+@agent.tool
+async def query_db(ctx: RunContext[Database], user_id: int) -> str:
+    # ctx.depsにアクセスできないため動作しません
+    return await ctx.deps.query(user_id)
 ```
 
-#### ステップ6: 結果をLLMに返す
+エラーメッセージ：
+```
+MessageConversionError: Tools that require RunContext are not supported with ClaudeCodeCLIModel.
+Only context-free tools can be used.
 
-```json
-{
-  "role": "user",
-  "content": [
-    {
-      "type": "tool_result",
-      "tool_use_id": "toolu_123",
-      "content": "東京の天気: 晴れ、気温22°C"
-    }
-  ]
-}
+Workaround: Use Pydantic AI standard (AnthropicModel) for context-dependent tools.
 ```
 
-#### ステップ7: LLMが最終応答を生成
+#### 実装の仕組み
 
-```json
-{
-  "role": "assistant",
-  "content": [
-    {
-      "type": "text",
-      "text": "東京は晴れで、気温は22°Cです。"
-    }
-  ]
-}
-```
-
-### 高度な例：依存性注入
+Phase 1の実装は、Claude Code SDKの**In-process MCP Server**機能を活用しています：
 
 ```python
-from dataclasses import dataclass
-from pydantic_ai import Agent, RunContext
-from pydantic_ai.models.anthropic import AnthropicModel
+# 内部処理（自動）
+from claude_code_sdk import create_sdk_mcp_server, tool
 
-# 依存性の定義
-@dataclass
-class Deps:
-    api_key: str
-    database_url: str
+# Pydantic AIツールをMCPツールに変換
+@tool("calculate", "計算ツール", {"x": int, "y": int})
+async def wrapped(args):
+    result = calculate(args["x"], args["y"])
+    return {"content": [{"type": "text", "text": str(result)}]}
 
-model = AnthropicModel('claude-haiku-4-5')
-agent = Agent(model, deps_type=Deps)
+# MCPサーバーを作成
+server = create_sdk_mcp_server("pydantic-custom-tools", tools=[wrapped])
 
-# 依存性を使用するツール
-@agent.tool
-async def fetch_user_data(ctx: RunContext[Deps], user_id: int) -> str:
-    """データベースからユーザー情報を取得
-
-    Args:
-        ctx: RunContext（依存性にアクセス可能）
-        user_id: ユーザーID
-
-    Returns:
-        ユーザー情報
-    """
-    # ctx.deps でデータベース接続等にアクセス
-    db_url = ctx.deps.database_url
-    # データベースクエリを実行
-    return f"ユーザー{user_id}の情報: ..."
-
-# 実行時に依存性を渡す
-deps = Deps(api_key="...", database_url="...")
-result = await agent.run('ユーザー123の情報を教えて', deps=deps)
+# ClaudeCodeOptionsに設定
+options = ClaudeCodeOptions(mcp_servers={"custom": server})
 ```
 
-### 複数ツールの連携
-
-```python
-model = AnthropicModel('claude-haiku-4-5')
-agent = Agent(model)
-
-@agent.tool
-async def search_flights(departure: str, destination: str, date: str) -> str:
-    """フライトを検索"""
-    return f"{departure}から{destination}へのフライト一覧: ..."
-
-@agent.tool
-async def book_flight(flight_id: str) -> str:
-    """フライトを予約"""
-    return f"フライト{flight_id}を予約しました"
-
-# LLMが自動的に複数ツールを順番に呼び出す
-result = await agent.run('明日、東京から大阪へのフライトを予約して')
-# 1. search_flights("東京", "大阪", "2025-10-25")
-# 2. book_flight("FL123")
-```
+詳細は [動作の仕組み](how-it-works.md) の「カスタムツールの動作原理」セクションを参照してください。
 
 ---
 
-## なぜpydantic-claude-cliで未対応なのか
+## なぜpydantic-claude-cliで当初未対応だったのか
 
 ### 根本的な問題：2つの異なるツールシステム
 

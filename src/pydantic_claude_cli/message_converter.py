@@ -6,7 +6,6 @@ from typing import Any
 
 from claude_code_sdk.types import (
     AssistantMessage,
-    ContentBlock,
     TextBlock,
     ThinkingBlock,
     ToolResultBlock,
@@ -14,7 +13,6 @@ from claude_code_sdk.types import (
 )
 from pydantic_ai.messages import (
     ModelRequest,
-    ModelRequestPart,
     ModelResponse,
     ModelResponsePart,
     SystemPromptPart,
@@ -138,7 +136,9 @@ def convert_from_claude_message(
             content_str = (
                 block.content
                 if isinstance(block.content, str)
-                else str(block.content) if block.content else ""
+                else str(block.content)
+                if block.content
+                else ""
             )
             parts.append(
                 ToolReturnPart(
@@ -172,7 +172,8 @@ def extract_usage_from_result(result_data: dict[str, Any]) -> RequestUsage:
     return RequestUsage(
         request_tokens=usage_dict.get("input_tokens", 0),
         response_tokens=usage_dict.get("output_tokens", 0),
-        total_tokens=usage_dict.get("input_tokens", 0) + usage_dict.get("output_tokens", 0),
+        total_tokens=usage_dict.get("input_tokens", 0)
+        + usage_dict.get("output_tokens", 0),
         # Additional details
         details={
             "duration_ms": result_data.get("duration_ms", 0),

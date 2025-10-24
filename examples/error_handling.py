@@ -61,32 +61,6 @@ async def example_basic_request():
         print(f"予期しないエラー: {e}")
 
 
-async def example_unsupported_features():
-    """未対応機能のエラーを実演"""
-    print("\n" + "=" * 60)
-    print("例: 未対応機能（カスタムツール）")
-    print("=" * 60)
-
-    try:
-        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
-        agent = Agent(model)
-
-        # カスタムツールを定義（未対応）
-        @agent.tool
-        def get_weather(city: str) -> str:
-            """都市の天気を取得"""
-            return f"{city}の天気: 晴れ、22°C"
-
-        result = await agent.run("東京の天気は？")
-        print(f"応答: {result.output}")
-
-    except MessageConversionError as e:
-        print(f"予期されたエラーをキャッチ: {e}")
-        print("\nカスタムツールは現在のバージョンでは未対応です。")
-    except Exception as e:
-        print(f"その他のエラー: {e}")
-
-
 async def main():
     """すべてのエラーハンドリング例を実行"""
     print("pydantic-claude-cliのエラーハンドリング例")
@@ -95,11 +69,13 @@ async def main():
     # 例を実行
     await example_cli_not_found()
     await example_basic_request()
-    await example_unsupported_features()
 
     print("\n" + "=" * 60)
     print("例の実行完了！")
     print("=" * 60)
+    print(
+        "\n📝 Note: カスタムツールの使用例は examples/custom_tools_basic.py を参照してください。"
+    )
 
 
 if __name__ == "__main__":

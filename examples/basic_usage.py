@@ -36,7 +36,9 @@ async def main():
 
     try:
         # シンプルなクエリを実行
-        result = await agent.run("こんにちは！プログラミングについての短いジョークを教えてください。")
+        result = await agent.run(
+            "こんにちは！プログラミングについての短いジョークを教えてください。"
+        )
 
         print("\n" + "=" * 60)
         print("Claudeからの応答:")
@@ -56,7 +58,9 @@ async def main():
     except Exception as e:
         print(f"\nエラー: {e}")
         print("\n確認事項:")
-        print("1. Claude Code CLIがインストールされているか: npm install -g @anthropic-ai/claude-code")
+        print(
+            "1. Claude Code CLIがインストールされているか: npm install -g @anthropic-ai/claude-code"
+        )
         print("2. Claude Codeにログインしているか")
         raise
 

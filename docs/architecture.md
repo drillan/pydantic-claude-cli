@@ -55,6 +55,22 @@
 │  └──────────────────────────────────────────────────┘       │
 │                         │                                      │
 │  ┌──────────────────────────────────────────────────┐       │
+│  │ tool_support (v0.2+)                              │       │
+│  │                                                    │       │
+│  │  - requires_run_context(): 依存性検出             │       │
+│  │  - find_tool_function(): 関数探索                 │       │
+│  │  - extract_tools_from_agent(): ツール抽出         │       │
+│  └──────────────────────────────────────────────────┘       │
+│                         │                                      │
+│  ┌──────────────────────────────────────────────────┐       │
+│  │ tool_converter (v0.2+)                            │       │
+│  │                                                    │       │
+│  │  - extract_python_types(): 型変換                 │       │
+│  │  - format_tool_result(): MCP形式変換              │       │
+│  │  - create_mcp_from_tools(): MCPサーバー作成       │       │
+│  └──────────────────────────────────────────────────┘       │
+│                         │                                      │
+│  ┌──────────────────────────────────────────────────┐       │
 │  │ exceptions                                        │       │
 │  │                                                    │       │
 │  │  - ClaudeCLINotFoundError                         │       │
@@ -64,6 +80,7 @@
 └────────────────────────┬────────────────────────────────────┘
                          │
                          │ query(prompt, options)
+                         │ + mcp_servers (v0.2+)
                          │
 ┌────────────────────────▼────────────────────────────────────┐
 │                  claude-code-sdk パッケージ                   │
@@ -175,6 +192,37 @@
 │                                     │
 │ + extract_usage_from_result()       │
 │   : dict → RequestUsage             │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│      tool_support (v0.2+)           │
+├─────────────────────────────────────┤
+│ 関数群:                             │
+│                                     │
+│ + requires_run_context()            │
+│   : Callable → bool                 │
+│                                     │
+│ + find_tool_function()              │
+│   : ToolDefinition → Callable?      │
+│                                     │
+│ + extract_tools_from_agent()        │
+│   : Parameters → (tools, bool)      │
+└─────────────────────────────────────┘
+
+┌─────────────────────────────────────┐
+│      tool_converter (v0.2+)         │
+├─────────────────────────────────────┤
+│ 関数群:                             │
+│                                     │
+│ + extract_python_types()            │
+│   : JSONSchema → dict[str, type]    │
+│                                     │
+│ + format_tool_result()              │
+│   : Any → MCPToolResult             │
+│                                     │
+│ + create_mcp_from_tools()           │
+│   : list[(ToolDef, func)]           │
+│   → McpSdkServerConfig              │
 └─────────────────────────────────────┘
 
 ┌─────────────────────────────────────┐
@@ -453,4 +501,131 @@ User    Agent   Model   MsgConv  SDK    CLI     API
      ┌─────────┐
      │ 終了     │
      └─────────┘
+```
+
+---
+
+## カスタムツールアーキテクチャ（v0.2+）
+
+### コンポーネント連携図
+
+```
+┌─────────────────────────────────────────┐
+│  Pydantic AI Agent                      │
+│                                         │
+│  @agent.tool_plain                      │
+│  def my_tool(x: int, y: int) -> int:    │
+│      return x + y                       │
+└──────────────┬──────────────────────────┘
+               │
+               │ ToolDefinition
+               │ (スキーマのみ)
+               ▼
+┌──────────────────────────────────────────┐
+│  ClaudeCodeCLIModel.request()            │
+│                                          │
+│  1. function_toolsを検出                 │
+└──────────────┬───────────────────────────┘
+               │
+               │ ModelRequestParameters
+               ▼
+┌──────────────────────────────────────────┐
+│  tool_support.extract_tools_from_agent() │
+│                                          │
+│  1. FunctionToolsetから関数を探索         │
+│  2. requires_run_context()で依存性検出   │
+└──────────────┬───────────────────────────┘
+               │
+               │ (ToolDefinition, func)
+               │ + has_context_tools: bool
+               ▼
+┌──────────────────────────────────────────┐
+│  tool_converter.create_mcp_from_tools()  │
+│                                          │
+│  1. extract_python_types()で型抽出       │
+│  2. @sdk_tool でMCPツール作成            │
+│  3. 同期関数をasyncでラップ              │
+└──────────────┬───────────────────────────┘
+               │
+               │ McpSdkServerConfig
+               ▼
+┌──────────────────────────────────────────┐
+│  ClaudeCodeOptions                       │
+│  mcp_servers={"custom": server}          │
+└──────────────┬───────────────────────────┘
+               │
+               │ query(prompt, options)
+               ▼
+┌──────────────────────────────────────────┐
+│  Claude Code CLI Process                 │
+│  + In-process MCP Server                 │
+│                                          │
+│  1. LLMがツール呼び出しを返す            │
+│  2. MCPサーバーにツール呼び出し          │
+│  3. Python関数を実行                     │
+│  4. 結果をLLMに返す                      │
+└──────────────────────────────────────────┘
+```
+
+### カスタムツールデータフロー
+
+```{mermaid}
+sequenceDiagram
+    participant User as ユーザーコード
+    participant Agent as Pydantic AI Agent
+    participant Model as ClaudeCodeCLIModel
+    participant ToolSupport as tool_support
+    participant ToolConverter as tool_converter
+    participant SDK as claude-code-sdk
+    participant CLI as Claude CLI
+    participant MCP as In-process MCP
+    participant LLM as Claude API
+
+    User->>Agent: agent.run("Calculate 5+3")
+    Agent->>Model: request(messages, parameters)
+
+    Note over Model: カスタムツール検出
+    Model->>ToolSupport: extract_tools_from_agent()
+    ToolSupport->>ToolSupport: requires_run_context()
+    ToolSupport-->>Model: (tools, has_context=False)
+
+    Model->>ToolConverter: create_mcp_from_tools()
+    ToolConverter->>ToolConverter: extract_python_types()
+    ToolConverter->>ToolConverter: @sdk_tool でラップ
+    ToolConverter-->>Model: McpSdkServerConfig
+
+    Model->>SDK: query(prompt, options)
+    Note over SDK: mcp_servers設定
+    SDK->>CLI: spawn subprocess
+    CLI->>MCP: MCPサーバー初期化
+
+    CLI->>LLM: リクエスト + tools定義
+    LLM-->>CLI: tool_use(name="add", args={x:5, y:3})
+
+    CLI->>MCP: call_tool("add", {x:5, y:3})
+    MCP->>MCP: Python関数実行
+    MCP-->>CLI: {"content": [{"type": "text", "text": "8"}]}
+
+    CLI->>LLM: tool_result + 結果
+    LLM-->>CLI: "The answer is 8"
+
+    CLI-->>SDK: AssistantMessage
+    SDK-->>Model: AssistantMessage
+    Model-->>Agent: ModelResponse
+    Agent-->>User: result.data = "8"
+```
+
+### Phase 1の制約事項
+
+**サポート対象**:
+- 依存性なしツール（`@agent.tool_plain`）
+- 基本型の引数（str, int, float, bool, list, dict）
+- Pydanticモデルの引数
+- 同期・非同期ツール
+
+**非サポート**:
+- RunContext依存ツール（`@agent.tool`）
+- 依存性注入（`ctx.deps`へのアクセス）
+- ModelRetryの伝播
+- ツール実行のリトライ制御
 ```

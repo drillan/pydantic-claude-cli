@@ -55,7 +55,9 @@ class ClaudeCodeCLIProvider(Provider[None]):
             path = Path(cli_path)
             if path.exists() and path.is_file():
                 return str(path)
-            raise ClaudeCLINotFoundError(f"Claude CLI not found at specified path: {cli_path}")
+            raise ClaudeCLINotFoundError(
+                f"Claude CLI not found at specified path: {cli_path}"
+            )
 
         # Try to find in PATH
         if cli := shutil.which("claude"):

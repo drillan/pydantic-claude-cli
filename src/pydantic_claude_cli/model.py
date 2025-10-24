@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-from claude_code_sdk import query as claude_query
+from claude_code_sdk import ClaudeSDKClient, query as claude_query
 from claude_code_sdk.types import (
     AssistantMessage,
     ClaudeCodeOptions,
@@ -15,11 +15,14 @@ from claude_code_sdk.types import (
     SystemMessage,
 )
 from pydantic_ai import ModelProfile
-from pydantic_ai.messages import ModelMessage, ModelRequest, ModelResponse
+from pydantic_ai.messages import ModelMessage, ModelResponse
 from pydantic_ai.models import Model, ModelRequestParameters, ModelSettings
-from pydantic_ai.providers import Provider
 
-from .exceptions import ClaudeCLIProcessError, MessageConversionError, ClaudeCLINotFoundError
+from .exceptions import (
+    ClaudeCLIProcessError,
+    MessageConversionError,
+    ClaudeCLINotFoundError,
+)
 from .message_converter import (
     convert_from_claude_message,
     convert_to_claude_prompt,
@@ -59,20 +62,25 @@ class ClaudeCodeCLIModel(Model):
     _provider: ClaudeCodeCLIProvider = field(repr=False)
     _cli_path: str | Path | None = field(default=None, repr=False)
     _max_turns: int | None = field(default=None, repr=False)
-    _permission_mode: Literal["default", "acceptEdits", "plan", "bypassPermissions"] | None = field(
+    _permission_mode: (
+        Literal["default", "acceptEdits", "plan", "bypassPermissions"] | None
+    ) = field(default=None, repr=False)
+    _agent_toolsets: Any = field(
         default=None, repr=False
-    )
+    )  # Agent._function_toolsetへの参照
 
     def __init__(
         self,
         model_name: str,
         *,
-        provider: Literal["claude-code-cli"] | ClaudeCodeCLIProvider = "claude-code-cli",
+        provider: Literal["claude-code-cli"]
+        | ClaudeCodeCLIProvider = "claude-code-cli",
         profile: ModelProfile | None = None,
         settings: ModelSettings | None = None,
         cli_path: str | Path | None = None,
         max_turns: int | None = None,
-        permission_mode: Literal["default", "acceptEdits", "plan", "bypassPermissions"] | None = None,
+        permission_mode: Literal["default", "acceptEdits", "plan", "bypassPermissions"]
+        | None = None,
     ):
         """Initialize Claude Code CLI model.
 
@@ -114,6 +122,21 @@ class ClaudeCodeCLIModel(Model):
         """The model system/provider name."""
         return self._provider.name
 
+    def set_agent_toolsets(self, toolsets: Any) -> None:
+        """Agentのtoolsetsを設定する（内部使用）
+
+        この関数は、Agent作成後に自動的に呼び出されることを想定しています。
+        ユーザーが直接呼び出す必要はありません。
+
+        Args:
+            toolsets: Agent._function_toolset
+
+        Note:
+            これはPydantic AIの公式APIではなく、内部実装の詳細に依存しています。
+            将来のバージョンで変更される可能性があります。
+        """
+        self._agent_toolsets = toolsets
+
     async def request(
         self,
         messages: list[ModelMessage],
@@ -139,12 +162,61 @@ class ClaudeCodeCLIModel(Model):
             model_settings, model_request_parameters
         )
 
-        # Check for unsupported features
-        if model_request_parameters.function_tools or model_request_parameters.output_tools:
-            raise MessageConversionError(
-                "Custom tools are not yet supported by ClaudeCodeCLIModel. "
-                "Only Claude Code CLI's built-in tools are available."
+        # カスタムツールサポート（Phase 1: 依存性なしツールのみ）
+        mcp_server = None
+        if model_request_parameters.function_tools:
+            from .tool_converter import create_mcp_from_tools
+            from .tool_support import extract_tools_from_agent
+
+            # NOTE: 現在の制限事項
+            # agent_toolsetsにアクセスできないため、FunctionToolsetから
+            # 関数を抽出することができません。
+            # この問題は将来のバージョンで解決予定です。
+
+            # とりあえず、output_toolsはサポートしない
+            if model_request_parameters.output_tools:
+                raise MessageConversionError(
+                    "Output tools are not supported with custom tools in ClaudeCodeCLIModel. "
+                    "Please use only function tools (@agent.tool or @agent.tool_plain)."
+                )
+
+            # ツールを抽出して検証
+            # _agent_toolsetsがある場合は、リストとしてラップして渡す
+            agent_toolsets_list = (
+                [self._agent_toolsets] if self._agent_toolsets is not None else None
             )
+            tools_with_funcs, has_context_tools = extract_tools_from_agent(
+                model_request_parameters, agent_toolsets=agent_toolsets_list
+            )
+
+            # RunContext依存ツールがあればエラー
+            if has_context_tools:
+                raise MessageConversionError(
+                    "Tools that require RunContext are not supported with ClaudeCodeCLIModel.\n"
+                    "Only context-free tools can be used.\n\n"
+                    "Supported (context-free tool):\n"
+                    "  @agent.tool_plain\n"
+                    "  def my_tool(x: int, y: int) -> str:\n"
+                    "      return str(x + y)\n\n"
+                    "Not supported (requires RunContext):\n"
+                    "  @agent.tool\n"
+                    "  async def my_tool(ctx: RunContext[DB], x: int) -> str:\n"
+                    "      result = await ctx.deps.query(x)  # Cannot access ctx.deps\n"
+                    "      return str(result)\n\n"
+                    "Workaround: Use Pydantic AI standard (AnthropicModel) for context-dependent tools."
+                )
+
+            # MCPサーバー作成
+            if tools_with_funcs:
+                import warnings
+
+                warnings.warn(
+                    f"Creating MCP server with {len(tools_with_funcs)} custom tools: "
+                    f"{[name for name, _ in tools_with_funcs]}",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                mcp_server = create_mcp_from_tools(tools_with_funcs)
 
         # Convert messages
         try:
@@ -154,27 +226,77 @@ class ClaudeCodeCLIModel(Model):
             raise MessageConversionError(f"Failed to convert messages: {e}") from e
 
         # Prepare Claude Code options
+        # カスタムツールの名前リストを作成（mcp_serverが存在する場合のみ）
+        # MCPツールは "mcp__{server_name}__{tool_name}" の形式で参照される
+        custom_tool_names: list[str] = []
+        if mcp_server is not None:
+            mcp_server_name = "custom"
+            # ツール名にプレフィックスを付ける
+            custom_tool_names = [
+                f"mcp__{mcp_server_name}__{tool.name}"
+                for tool in (model_request_parameters.function_tools or [])
+            ]
+
+        # デバッグ: オプションをログ出力
+        if mcp_server:
+            import warnings
+
+            warnings.warn(
+                f"ClaudeCodeOptions: mcp_servers={list(({'custom': mcp_server} if mcp_server else {}).keys())}, "
+                f"allowed_tools={custom_tool_names}",
+                UserWarning,
+                stacklevel=2,
+            )
+
+        # MCPツールの許可設定
+        # MCPツールは "mcp__{server_name}__{tool_name}" の形式で参照される
         options = ClaudeCodeOptions(
             model=self._model_name,
             system_prompt=system_prompt,
             max_turns=self._max_turns,
             permission_mode=self._permission_mode,
-            # Disable tools for now
-            allowed_tools=[],
+            # MCPサーバー設定（カスタムツールがある場合のみ）
+            mcp_servers={"custom": mcp_server} if mcp_server else {},
+            # MCPツールを明示的に許可（プレフィックス付き）
+            allowed_tools=custom_tool_names if custom_tool_names else [],
+            # 組み込みツールを無効化（MCPツールのみ使用）
+            disallowed_tools=[
+                "Bash",
+                "Read",
+                "Write",
+                "Edit",
+                "Glob",
+                "Grep",
+                "WebFetch",
+                "WebSearch",
+                "Task",
+            ]
+            if mcp_server
+            else [],
         )
 
-        # Use the query() function for one-shot requests
+        # MCPツールがある場合はClaudeSDKClientを使用、ない場合はquery()を使用
+        # NOTE: query()関数ではSDK MCP Serverが正しく動作しない（既知の問題）
+        # ClaudeSDKClientを使用すると、MCPツールが正常に呼び出される
         try:
-            # Collect all messages
             response_messages: list[Message] = []
-            async for message in claude_query(prompt=prompt, options=options):
-                response_messages.append(message)
 
-                # ResultMessage is the last message, but continue to consume
-                # the generator to avoid cleanup errors
-                if isinstance(message, ResultMessage):
-                    # Don't break, let the generator finish naturally
-                    pass
+            if mcp_server is not None:
+                # ClaudeSDKClientを使用（MCPツール対応）
+                async with ClaudeSDKClient(options=options) as client:
+                    await client.query(prompt)
+                    async for message in client.receive_response():
+                        response_messages.append(message)
+            else:
+                # query()を使用（通常動作）
+                async for message in claude_query(prompt=prompt, options=options):
+                    response_messages.append(message)
+
+                    # ResultMessage is the last message, but continue to consume
+                    # the generator to avoid cleanup errors
+                    if isinstance(message, ResultMessage):
+                        # Don't break, let the generator finish naturally
+                        pass
 
             # Find the assistant message(s) in the response
             assistant_messages: list[AssistantMessage] = []
@@ -195,12 +317,16 @@ class ClaudeCodeCLIModel(Model):
                     raise ClaudeCLIProcessError(
                         f"Claude CLI returned error: {result_message.result or 'Unknown error'}"
                     )
-                raise ClaudeCLIProcessError("No assistant message received from Claude CLI")
+                raise ClaudeCLIProcessError(
+                    "No assistant message received from Claude CLI"
+                )
 
             # Convert the last assistant message to ModelResponse
             # (in multi-turn conversations, there might be multiple)
             last_assistant_message = assistant_messages[-1]
-            model_response = convert_from_claude_message(last_assistant_message, self._model_name)
+            model_response = convert_from_claude_message(
+                last_assistant_message, self._model_name
+            )
 
             # Add usage information if available
             if result_message:
@@ -221,7 +347,9 @@ class ClaudeCodeCLIModel(Model):
                         model_name=model_response.model_name,
                         timestamp=model_response.timestamp,
                         provider_name=model_response.provider_name,
-                        finish_reason="stop" if not result_message.is_error else "error",
+                        finish_reason="stop"
+                        if not result_message.is_error
+                        else "error",
                     )
                 except Exception:
                     # If usage extraction fails, continue with default usage

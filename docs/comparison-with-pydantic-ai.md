@@ -53,7 +53,8 @@ agent = Agent(model)
 | APIキー | ✅ 必要 | ❌ 不要 |
 | Claude Code ログイン | ❌ 不要 | ✅ 必要 |
 | **高度な機能** |
-| カスタムツール | ✅ 完全対応 | ❌ 未対応 |
+| カスタムツール（依存性なし） | ✅ 完全対応 | ✅ **完全対応（v0.2+）** |
+| カスタムツール（RunContext依存） | ✅ 完全対応 | ❌ 未対応 |
 | マルチモーダル（画像） | ✅ 対応 | ❌ 未対応 |
 | マルチモーダル（PDF） | ✅ 対応 | ❌ 未対応 |
 | マルチモーダル（音声） | ✅ 対応 | ❌ 未対応 |
@@ -188,34 +189,36 @@ print(result.output)  # 全体が一度に返る
 
 ### 3. カスタムツール
 
-#### Pydantic AI 標準
+#### Pydantic AI 標準（完全サポート）
 
 ```python
-from pydantic_ai import Agent
+from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.anthropic import AnthropicModel
 
 model = AnthropicModel('claude-haiku-4-5')
-agent = Agent(model)
+agent = Agent(model, deps_type=dict)
 
-# カスタムツール定義
+# RunContext依存ツール（完全サポート）
 @agent.tool
-async def get_weather(city: str) -> str:
+async def get_weather(ctx: RunContext[dict], city: str) -> str:
     """都市の天気を取得"""
+    api_key = ctx.deps.get('api_key')
     # 実際のAPIコール
     return f"{city}の天気: 晴れ"
 
 # ツールを使用
-result = await agent.run('東京の天気は？')
+result = await agent.run('東京の天気は？', deps={'api_key': '...'})
 print(result.output)
 ```
 
 **特徴**:
 - ✅ Python関数として定義
+- ✅ RunContext依存性サポート
 - ✅ 型安全
 - ✅ 自動的にスキーマ生成
 - ✅ 複数ツールの組み合わせ
 
-#### pydantic-claude-cli
+#### pydantic-claude-cli（依存性なしツールのみ）
 
 ```python
 from pydantic_ai import Agent
@@ -224,28 +227,32 @@ from pydantic_claude_cli import ClaudeCodeCLIModel
 model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 
-# カスタムツール定義（エラーになる）
-@agent.tool
-async def get_weather(city: str) -> str:
-    """都市の天気を取得"""
-    return f"{city}の天気: 晴れ"
+# toolsetsを設定（重要！）
+model.set_agent_toolsets(agent._function_toolset)
 
-# MessageConversionError が発生
-result = await agent.run('東京の天気は？')
-```
+# 依存性なしツール（✅ v0.2+で動作！）
+@agent.tool_plain
+def calculate(x: int, y: int) -> int:
+    """計算ツール"""
+    return x + y
 
-**エラー**:
-```
-MessageConversionError: Custom tools are not yet supported by ClaudeCodeCLIModel.
-Only Claude Code CLI's built-in tools are available.
+# ツールを使用
+result = await agent.run('5 + 3を計算して')
+print(result.output)
+# → ツールが実際に呼び出される！
 ```
 
 **特徴**:
-- ❌ カスタムツール未対応
-- ⚠️ Claude Code CLI 組み込みツールのみ（Bash, Read, Write等）
-- ❌ 現時点では統合方法なし
+- ✅ **依存性なしツールは完全対応（v0.2+）**
+- ✅ 型安全
+- ✅ 自動的にスキーマ生成
+- ✅ 複数ツールの組み合わせ
+- ❌ RunContext依存は未対応
+- ⚠️ `set_agent_toolsets()`の手動呼び出しが必要
 
-**結論**: カスタムツールが必要な場合は Pydantic AI 標準を使用。
+**結論**:
+- **依存性なしツール**: pydantic-claude-cliで動作 ✅
+- **RunContext依存ツール**: Pydantic AI標準を使用
 
 ---
 
@@ -586,9 +593,15 @@ CMD ["python", "app.py"]
   │
   ▼ No
   │
-カスタムツールが必要？
+RunContext依存のカスタムツールが必要？
   │
   ├─Yes─▶ Pydantic AI 標準
+  │
+  ▼ No
+  │
+依存性なしのカスタムツールが必要？
+  │
+  ├─Yes─▶ どちらでも可（pydantic-claude-cliでも動作）
   │
   ▼ No
   │
@@ -672,9 +685,12 @@ agent = Agent(model)
 
 以下が使用されている場合は移行できません：
 
-- ❌ カスタムツール（`@agent.tool`）
+- ❌ RunContext依存のカスタムツール（`@agent.tool`）
 - ❌ ストリーミング（`run_stream`）
 - ❌ マルチモーダル（画像、PDF等）
+
+**移行可能な機能**:
+- ✅ 依存性なしのカスタムツール（`@agent.tool_plain`）は移行後も動作
 
 ### pydantic-claude-cli → Pydantic AI 標準
 
@@ -789,10 +805,11 @@ dev_agent = Agent(dev_model)
 
 ### Q4: 将来的に pydantic-claude-cli で全機能サポートされますか？
 
-**A**: 部分的にはサポート予定です。
+**A**: 部分的にサポート済み・予定です。
 
+- ✅ **カスタムツール（依存性なし）: 実装済み（v0.2+）**
 - ✅ ストリーミング: 実装予定
-- ⚠️ カスタムツール: MCP経由で可能性あり
+- ⚠️ カスタムツール（RunContext依存）: Phase 3で検討
 - ❓ マルチモーダル: Claude Code SDK の対応次第
 
 ただし、本番環境では Pydantic AI 標準を推奨します。

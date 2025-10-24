@@ -9,7 +9,7 @@
 - ✅ **APIキー不要** - Claude Code CLIで認証
 - ✅ **簡単統合** - Pydantic AIモデルのドロップイン置き換え
 - ✅ **テキストベース会話** - テキストチャットを完全サポート
-- ⚠️ **カスタムツール** - 未対応（近日対応予定）
+- ✅ **カスタムツール** - 依存性なしツールを完全サポート（v0.2+）
 - ⚠️ **マルチモーダル** - 画像/ファイル未対応（近日対応予定）
 
 ## 必要要件
@@ -95,6 +95,53 @@ model = ClaudeCodeCLIModel(
 )
 ```
 
+### カスタムツールの使用（v0.2+）
+
+依存性なしツール（`@agent.tool_plain`）が**完全に動作します**：
+
+```python
+from pydantic_ai import Agent
+from pydantic_claude_cli import ClaudeCodeCLIModel
+
+model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+agent = Agent(model)
+
+# 重要: Agent作成後にtoolsetsを設定
+model.set_agent_toolsets(agent._function_toolset)
+
+# カスタムツールを定義
+@agent.tool_plain
+def calculate_total(prices: list[float]) -> float:
+    """価格リストの合計を計算"""
+    return sum(prices)
+
+@agent.tool_plain
+def format_currency(amount: float, currency: str = "JPY") -> str:
+    """金額を通貨形式でフォーマット"""
+    return f"{amount:,.0f} {currency}"
+
+# 実行
+result = await agent.run('100円、200円、300円の合計を通貨形式で表示して')
+print(result.output)
+```
+
+**重要**: `model.set_agent_toolsets(agent._function_toolset)` の呼び出しが必要です。
+
+**サポート機能**:
+- ✅ 基本型のツール（int, str, float, bool, list, dict）
+- ✅ Pydanticモデルを引数に取るツール
+- ✅ 同期・非同期ツール
+- ✅ 複数ツールの連携
+- ✅ 実際のツール呼び出し確認済み
+
+**制限事項**:
+- ⚠️ `RunContext`依存ツール（`@agent.tool`）は未サポート（Phase 3で予定）
+- ⚠️ Agent作成後に`set_agent_toolsets()`の手動呼び出しが必要
+
+詳細は：
+- [カスタムツールガイド](https://pydantic-claude-cli.readthedocs.io/ja/latest/custom-tools.html)
+- [examples/custom_tools_basic.py](examples/custom_tools_basic.py)
+
 ### エラーハンドリング
 
 ```python
@@ -143,13 +190,14 @@ Claude Code CLIがサポートするすべてのClaudeモデルを使用でき�
 
 ### 未対応機能
 
-- ❌ **カスタムツール** - Claude Code CLIの組み込みツールのみ利用可能
+- ⚠️ **RunContext依存ツール** - `@agent.tool`（依存性注入）は未サポート
 - ❌ **マルチモーダルコンテンツ** - 画像、ファイル、その他メディア未対応
 - ❌ **ストリーミングレスポンス** - 現在は非ストリーミングリクエストのみ
 
 ### 対応済み機能
 
 - ✅ **テキストベースのQ&A** - テキスト会話を完全サポート
+- ✅ **カスタムツール（Phase 1）** - 依存性なしツールが完全動作
 - ✅ **システムプロンプト** - モデルへのカスタム指示
 - ✅ **会話履歴** - マルチターン会話
 - ✅ **エラーハンドリング** - 包括的なエラーメッセージ
@@ -215,6 +263,31 @@ uv run pytest
 # サンプル実行
 uv run python examples/basic_usage.py
 ```
+
+### サンプルスクリプト
+
+`examples/`ディレクトリには、以下の実用的なサンプルがあります：
+
+1. **`basic_usage.py`** - 基本的な使い方
+   - モデルの作成とAgent実行
+   - シンプルなQ&A
+
+2. **`error_handling.py`** - エラーハンドリング
+   - CLI未検出エラー
+   - プロセスエラー
+   - 例外処理パターン
+
+3. **`custom_tools_basic.py`** - カスタムツールの基本（v0.2+）
+   - 依存性なしツールの定義
+   - ツール呼び出しの確認
+   - 複数ツールの連携
+
+4. **`custom_tools_advanced.py`** - カスタムツールの高度な例（v0.2+）
+   - Pydanticモデルを引数に取るツール
+   - 非同期ツール
+   - 複雑なデータ処理
+
+すべてのサンプルは実際に動作確認済みです。
 
 ### テスト実行
 

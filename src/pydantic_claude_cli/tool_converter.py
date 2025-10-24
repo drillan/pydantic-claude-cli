@@ -1,0 +1,211 @@
+"""ToolDefinitionからSDK MCPツールへの変換
+
+このモジュールは、Pydantic AIのToolDefinitionを
+claude_code_sdkのMCPツール形式に変換する機能を提供します。
+
+主な機能:
+- JSON SchemaからPython型の抽出
+- ツール実行結果のMCP形式への変換
+- MCPサーバーの作成
+"""
+
+from __future__ import annotations
+
+import inspect
+import warnings
+from typing import Any, Callable, cast
+
+from claude_code_sdk import tool as sdk_tool
+from claude_code_sdk.types import McpSdkServerConfig
+from pydantic_ai.tools import ToolDefinition
+
+from .mcp_server_fixed import create_fixed_sdk_mcp_server
+
+
+def extract_python_types(json_schema: dict[str, Any]) -> dict[str, type]:
+    """JSON SchemaからPython型マッピングを抽出する
+
+    Args:
+        json_schema: JSON Schema dict
+
+    Returns:
+        {param_name: python_type} のマッピング
+
+    Example:
+        >>> schema = {
+        ...     "type": "object",
+        ...     "properties": {
+        ...         "x": {"type": "integer"},
+        ...         "name": {"type": "string"}
+        ...     }
+        ... }
+        >>> extract_python_types(schema)
+        {'x': <class 'int'>, 'name': <class 'str'>}
+    """
+    properties = json_schema.get("properties", {})
+
+    # JSON型からPython型へのマッピング
+    type_map: dict[str, type] = {
+        "string": str,
+        "integer": int,
+        "number": float,
+        "boolean": bool,
+        "array": list,
+        "object": dict,
+    }
+
+    result: dict[str, type] = {}
+
+    for prop_name, prop_schema in properties.items():
+        json_type = prop_schema.get("type", "string")
+
+        if json_type not in type_map:
+            # 不明な型の場合は警告してstrにフォールバック
+            warnings.warn(
+                f"Unknown JSON type '{json_type}' for parameter '{prop_name}', using str as fallback",
+                UserWarning,
+                stacklevel=2,
+            )
+            result[prop_name] = str
+        else:
+            result[prop_name] = type_map[json_type]
+
+    return result
+
+
+def format_tool_result(result: Any) -> dict[str, Any]:
+    """ツール実行結果をMCP形式に変換する
+
+    Args:
+        result: ツールの戻り値
+
+    Returns:
+        MCP ToolResult形式のdict
+
+    Example:
+        >>> format_tool_result("Hello")
+        {'content': [{'type': 'text', 'text': 'Hello'}]}
+        >>> format_tool_result(42)
+        {'content': [{'type': 'text', 'text': '42'}]}
+    """
+    # 既にMCP形式の場合はそのまま返す
+    if isinstance(result, dict) and "content" in result:
+        return result
+
+    # 文字列に変換してMCP形式にする
+    text_content = str(result)
+
+    return {"content": [{"type": "text", "text": text_content}]}
+
+
+def _make_async(func: Callable[..., Any]) -> Callable[..., Any]:
+    """同期関数をasync関数でラップする
+
+    Args:
+        func: 同期関数
+
+    Returns:
+        async関数
+
+    Example:
+        >>> def sync_func(x: int) -> int:
+        ...     return x * 2
+        >>> async_func = _make_async(sync_func)
+        >>> import asyncio
+        >>> asyncio.run(async_func(5))
+        10
+    """
+
+    async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
+        return func(*args, **kwargs)
+
+    return async_wrapper
+
+
+def create_mcp_from_tools(
+    tools_with_funcs: list[tuple[ToolDefinition, Callable[..., Any]]],
+) -> McpSdkServerConfig:
+    """ツールリストからMCPサーバーを作成する
+
+    Args:
+        tools_with_funcs: (ToolDefinition, 実行関数)のペアリスト
+
+    Returns:
+        McpSdkServerConfig dict
+
+    Example:
+        >>> def add(x: int, y: int) -> int:
+        ...     return x + y
+        >>> tool_def = ToolDefinition(
+        ...     name="add",
+        ...     description="Add numbers",
+        ...     parameters_json_schema={
+        ...         "type": "object",
+        ...         "properties": {
+        ...             "x": {"type": "integer"},
+        ...             "y": {"type": "integer"}
+        ...         }
+        ...     }
+        ... )
+        >>> server = create_mcp_from_tools([(tool_def, add)])
+        >>> # ClaudeCodeOptionsに渡す
+        >>> # options = ClaudeCodeOptions(mcp_servers={"custom": server})
+    """
+    sdk_tools = []
+
+    for tool_def, func in tools_with_funcs:
+        # JSON SchemaからPython型を抽出
+        input_schema = extract_python_types(tool_def.parameters_json_schema)
+
+        # 同期関数をasyncでラップ
+        if not inspect.iscoroutinefunction(func):
+            async_func = _make_async(func)
+        else:
+            async_func = func
+
+        # SDK MCPツールを作成
+        # NOTE: Pythonのクロージャの問題を回避するため、
+        # デフォルト引数で関数を束縛する
+        @sdk_tool(tool_def.name, tool_def.description or "", input_schema)
+        async def wrapped(
+            args: dict[str, Any], _func: Callable[..., Any] = async_func
+        ) -> dict[str, Any]:
+            """MCPツールのラッパー関数"""
+            try:
+                # 関数を実行
+                result = await _func(**args)
+
+                # 結果をMCP形式に変換
+                return format_tool_result(result)
+            except Exception as e:
+                # エラーをMCP形式で返す
+                return {
+                    "content": [
+                        {"type": "text", "text": f"Tool execution error: {str(e)}"}
+                    ],
+                    "is_error": True,
+                }
+
+        sdk_tools.append(wrapped)
+
+    # MCPサーバー作成
+    # NOTE: 修正版create_fixed_sdk_mcp_server()を使用
+    # claude-code-sdkの既知のバグ（Issue #6710）を回避
+    warnings.warn(
+        f"Creating FIXED MCP server 'pydantic-custom-tools' with {len(sdk_tools)} SDK tools",
+        UserWarning,
+        stacklevel=2,
+    )
+
+    server = create_fixed_sdk_mcp_server(
+        name="pydantic-custom-tools", version="1.0.0", tools=sdk_tools
+    )
+
+    # サーバーの内容を確認
+    warnings.warn(
+        f"FIXED MCP server created: type={server.get('type')}, name={server.get('name')}",
+        UserWarning,
+        stacklevel=2,
+    )
+
+    return cast(McpSdkServerConfig, server)

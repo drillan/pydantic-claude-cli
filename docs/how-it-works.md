@@ -497,17 +497,26 @@ Claude Code CLI:
   - MCPサーバー経由のカスタムツール
 ```
 
-**現在の選択**: ツールを完全に無効化（`allowed_tools=[]`）
+**Phase 1の実装（v0.2+）**: 依存性なしツールをサポート
 
-**理由**:
-1. 統合の複雑さ
-2. MCPサーバーのセットアップが必要
-3. MVP では不要
+```python
+# カスタムツールの使用例
+@agent.tool_plain
+def add(x: int, y: int) -> int:
+    return x + y
 
-**将来の方向性**:
-- MCP SDK Server を使用
-- Pydantic AIのツールをMCPツールに変換
-- SDK内MCPサーバーとして実行
+# MCPサーバーとして自動変換される
+```
+
+**実装方法**:
+1. `tool_support.py`でツールを抽出
+2. `tool_converter.py`でMCPツールに変換
+3. `create_sdk_mcp_server()`でIn-process MCPサーバー作成
+4. `ClaudeCodeOptions.mcp_servers`に設定
+
+**制限事項**:
+- RunContext依存ツール（`@agent.tool`）は未サポート
+- 依存性注入（`ctx.deps`）にアクセス不可
 
 ### 3. ストリーミング
 
@@ -595,6 +604,150 @@ API:    500-5000ms (モデルによる)
 
 合計:   600-5500ms
 ```
+
+---
+
+## カスタムツールの動作原理（v0.2+）
+
+### Phase 1: 依存性なしツールのサポート
+
+#### 実行フロー
+
+1. **ツール定義**:
+
+```python
+from pydantic_ai import Agent
+from pydantic_claude_cli import ClaudeCodeCLIModel
+
+model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+agent = Agent(model)
+
+@agent.tool_plain
+def add(x: int, y: int) -> int:
+    """Add two numbers"""
+    return x + y
+```
+
+2. **ツール抽出と検証** (`tool_support.py`):
+
+```python
+# Agent内部でToolDefinitionが生成される
+tool_def = ToolDefinition(
+    name="add",
+    description="Add two numbers",
+    parameters_json_schema={
+        "type": "object",
+        "properties": {
+            "x": {"type": "integer"},
+            "y": {"type": "integer"}
+        }
+    }
+)
+
+# FunctionToolsetから実行関数を探索
+func = find_tool_function(tool_def, agent_toolsets)
+
+# RunContext依存性をチェック
+has_context = requires_run_context(func)  # → False（依存性なし）
+```
+
+3. **SDK MCP変換** (`tool_converter.py`):
+
+```python
+# JSON SchemaからPython型を抽出
+input_schema = extract_python_types(tool_def.parameters_json_schema)
+# → {"x": int, "y": int}
+
+# SDK MCPツールを作成
+@sdk_tool("add", "Add two numbers", {"x": int, "y": int})
+async def wrapped(args):
+    result = await func(**args)  # 元の関数を実行
+    return format_tool_result(result)  # MCP形式に変換
+```
+
+4. **MCPサーバー作成**:
+
+```python
+# In-process MCPサーバーを生成
+server = create_sdk_mcp_server(
+    name="pydantic-custom-tools",
+    version="1.0.0",
+    tools=[wrapped]
+)
+# → McpSdkServerConfig (TypedDict)
+```
+
+5. **CLI実行**:
+
+```python
+# ClaudeCodeOptionsに設定
+options = ClaudeCodeOptions(
+    model="claude-sonnet-4-5-20250929",
+    mcp_servers={"custom": server}
+)
+
+# CLIプロセス内でツールを実行
+async for message in claude_query(prompt, options):
+    # LLMがツールを呼び出し
+    # MCPサーバーがPython関数を実行
+    # 結果がLLMに返される
+    ...
+```
+
+#### データフロー詳細
+
+```
+User Request: "Calculate 5 + 3"
+    ↓
+Agent.run()
+    ↓
+Model.request(messages, parameters)
+    ↓
+[カスタムツール処理]
+    ├─ extract_tools_from_agent()
+    │   ├─ find_tool_function(tool_def)
+    │   │   └→ add: Callable
+    │   └─ requires_run_context(add)
+    │       └→ False (OK)
+    │
+    ├─ create_mcp_from_tools()
+    │   ├─ extract_python_types()
+    │   │   └→ {"x": int, "y": int}
+    │   ├─ @sdk_tool でラップ
+    │   └─ create_sdk_mcp_server()
+    │       └→ McpSdkServerConfig
+    │
+    └─ ClaudeCodeOptions(
+            mcp_servers={"custom": server}
+        )
+    ↓
+claude_query(prompt, options)
+    ↓
+[Claude CLI Process]
+    ├─ LLM Request + tools定義
+    ├─ LLM Response: tool_use(add, {x:5, y:3})
+    ├─ MCP call_tool("add", ...)
+    ├─ Python func execution: add(5, 3) → 8
+    ├─ MCP result: {"content": [...]}
+    ├─ LLM Request + tool_result
+    └─ LLM Response: "The sum is 8"
+    ↓
+ModelResponse
+    ↓
+User: result.data = "8"
+```
+
+#### 技術的な特徴
+
+**In-process MCP Server**:
+- サブプロセスではなく、同一プロセス内で実行
+- IPCオーバーヘッドがない
+- デバッグが容易
+
+**制限事項の理由**:
+- RunContext依存ツールは、CLI経由では`ctx.deps`にアクセスできない
+- プロセス境界を超えて依存性を渡すことが困難
+- Phase 3で実験的サポートを検討中
 
 ---
 
