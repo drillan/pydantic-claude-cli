@@ -208,14 +208,6 @@ class ClaudeCodeCLIModel(Model):
 
             # MCPサーバー作成
             if tools_with_funcs:
-                import warnings
-
-                warnings.warn(
-                    f"Creating MCP server with {len(tools_with_funcs)} custom tools: "
-                    f"{[name for name, _ in tools_with_funcs]}",
-                    UserWarning,
-                    stacklevel=2,
-                )
                 mcp_server = create_mcp_from_tools(tools_with_funcs)
 
         # Convert messages
@@ -237,16 +229,6 @@ class ClaudeCodeCLIModel(Model):
                 for tool in (model_request_parameters.function_tools or [])
             ]
 
-        # デバッグ: オプションをログ出力
-        if mcp_server:
-            import warnings
-
-            warnings.warn(
-                f"ClaudeCodeOptions: mcp_servers={list(({'custom': mcp_server} if mcp_server else {}).keys())}, "
-                f"allowed_tools={custom_tool_names}",
-                UserWarning,
-                stacklevel=2,
-            )
 
         # MCPツールの許可設定
         # MCPツールは "mcp__{server_name}__{tool_name}" の形式で参照される

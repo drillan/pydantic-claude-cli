@@ -146,15 +146,8 @@ def extract_tools_from_agent(
         func = find_tool_function(tool_def, agent_toolsets)
 
         if func is None:
-            # 関数が見つからない場合は警告してスキップ
-            import warnings
-
-            warnings.warn(
-                f"Tool function not found for '{tool_def.name}'. "
-                f"Make sure to call model.set_agent_toolsets(agent._function_toolset) after creating the agent.",
-                UserWarning,
-                stacklevel=3,
-            )
+            # 関数が見つからない場合はスキップ
+            # NOTE: set_agent_toolsets()が呼び出されていない可能性
             continue
 
         # RunContext依存性をチェック
