@@ -5,13 +5,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+---
+
+## [0.1.0]
 
 ### Added
 
-#### カスタムツール機能（Phase 1）🎉
+#### カスタムツール機能（v0.1.0）
 
-- **依存性なしツール（`@agent.tool_plain`）の完全サポート**
+- **依存性なしツール（`@agent.tool_plain`）のサポート**
   - 基本型ツール（int, str, float, bool, list, dict）
   - Pydanticモデルを引数に取るツール
   - 同期・非同期ツール対応
@@ -57,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **README更新**:
   - カスタムツール使用例を追加
   - サンプルスクリプトリストを追加
-  - 機能ステータスを更新（実験的 → 完全動作）
+  - 機能ステータスを更新（実験的 → 動作確認済み）
 
 ### Fixed
 
@@ -70,19 +72,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **ツール名プレフィックス**: `mcp__custom__tool_name`形式で参照
 - **In-process MCP Server**: サブプロセスではなく同一プロセス内で実行
-- **型安全性**: 完全な型アノテーションとmypy検証
-- **品質保証**: Article 3（テストファースト）、Article 8（コード品質）、Article 16（型安全性）を完全遵守
+- **型安全性**: 包括的な型アノテーションとmypy検証
+- **品質保証**: テストファースト開発、厳格なコード品質基準、型安全性の徹底を遵守
 
 ### Known Limitations
 
-- **RunContext依存ツール**: `@agent.tool`は未サポート（Phase 3で検討）
+- **RunContext依存ツール**: `@agent.tool`は未サポート（将来のバージョンで検討）
 - **手動設定が必要**: `model.set_agent_toolsets(agent._function_toolset)`の呼び出しが必須
 - **ストリーミング**: 未対応
 - **マルチモーダル**: 画像・PDF等未対応
-
----
-
-## [0.1.0] - 未リリース
 
 ### Added
 
@@ -95,7 +93,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Features
 
-- テキストベース会話の完全サポート
+- テキストベース会話のサポート
 - システムプロンプト対応
 - 会話履歴管理
 - 使用量トラッキング

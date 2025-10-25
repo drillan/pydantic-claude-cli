@@ -1,13 +1,13 @@
 # 実験的依存性サポート
 
 **ステータス**: 実験的機能（安定版候補）
-**バージョン**: v0.2+ (Milestone 3)
+**バージョン**: v0.2+
 **動作確認**: ✅ 完了（85テスト合格、E2E動作確認済み）
 **推奨用途**: プロトタイプ、開発環境、非本番環境
 
 pydantic-claude-cli v0.2+では、実験的機能として依存性注入（RunContext + deps）をサポートします。
 
-この機能は完全に動作していますが、以下の理由で実験的機能としています：
+この機能は動作していますが、以下の理由で実験的機能としています：
 
 1. **Pydantic AI公式APIではなく回避策を使用**
    - ContextVarによる依存性転送
@@ -352,8 +352,8 @@ class SecureConfig:
 
 A: 主な違いは依存性のシリアライズ要件です：
 
-| 機能 | Pydantic AI標準 | pydantic-claude-cli (Milestone 3) |
-|------|----------------|-----------------------------------|
+| 機能 | Pydantic AI標準 | pydantic-claude-cli (実験的機能) |
+|------|----------------|----------------------------------|
 | 基本型deps | ✅ | ✅ |
 | Pydanticモデルdeps | ✅ | ✅ |
 | dataclass deps | ✅ | ✅ |
@@ -367,9 +367,9 @@ A: 主な違いは依存性のシリアライズ要件です：
 
 A: ClaudeCodeCLIModelはCLIプロセスを使用するため、依存性をJSON文字列として転送する必要があります。HTTPクライアントやデータベース接続はJSON化できないため、設定情報のみを渡し、ツール内で再作成します。
 
-### Q: 完全なRunContextサポートはいつ？
+### Q: RunContextのすべての機能をサポートする予定は？
 
-A: Pydantic AIのAPIに`Model.request()`への`run_context`パラメータ追加を提案中です。完全なサポートが必要な場合は、Pydantic AI標準（AnthropicModel）の使用を推奨します。
+A: Pydantic AIのAPIに`Model.request()`への`run_context`パラメータ追加を提案中です。すべての機能が必要な場合は、Pydantic AI標準（AnthropicModel）の使用を推奨します。
 
 ### Q: なぜClaudeCodeCLIAgentが必要？
 
@@ -406,9 +406,9 @@ A: ContextVarに依存性を設定するため、カスタムAgentラッパー�
 
 ## 移行ガイド
 
-### Phase 1から移行する場合
+### 基本機能から移行する場合
 
-**Phase 1（依存性なし）**:
+**基本機能（依存性なし）**:
 ```python
 from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
@@ -422,7 +422,7 @@ def my_tool(x: int) -> int:
     return x * 2
 ```
 
-**Milestone 3（依存性あり）**:
+**実験的機能（依存性あり、v0.2+）**:
 ```python
 from pydantic_ai import RunContext
 from pydantic_claude_cli import ClaudeCodeCLIModel, ClaudeCodeCLIAgent
@@ -444,10 +444,10 @@ result = await agent.run("Calculate 5 × 3", deps={"multiplier": 3})
 
 ### Pydantic AI標準から移行する場合
 
-完全なRunContextサポートが必要な場合は、Pydantic AI標準の使用を推奨します：
+RunContextのすべての機能が必要な場合は、Pydantic AI標準の使用を推奨します：
 
 ```python
-# Pydantic AI標準（完全なRunContextサポート）
+# Pydantic AI標準（RunContextのすべての機能）
 from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 
@@ -456,8 +456,8 @@ agent = Agent(model, deps_type=httpx.AsyncClient)
 
 @agent.tool
 async def fetch_data(ctx: RunContext[httpx.AsyncClient], url: str) -> str:
-    response = await ctx.deps.get(url)  # ✅ 動作する
-    ctx.retry("Retrying...")  # ✅ 動作する
+    response = await ctx.deps.get(url)  # ✅ サポート
+    ctx.retry("Retrying...")  # ✅ サポート
     return response.text
 ```
 

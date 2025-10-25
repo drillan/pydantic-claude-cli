@@ -60,6 +60,7 @@ def example():
 - ❌ Absolute terms: "完全サポート" (complete support), "必ず" (always), "絶対" (absolutely)
 - ❌ Exclamation marks: "！" for professional tone
 - ❌ Internal terminology: "Phase 1", "Milestone 3" (use "v0.2+" instead)
+- ❌ Internal references: "Article 3", "Article 8" (refer to concepts directly instead)
 
 **Prefer**:
 - ✅ Factual descriptions: "supports", "provides", "enables"

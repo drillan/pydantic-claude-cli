@@ -27,7 +27,7 @@ agent = Agent(model)
 from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
-# APIキー不要！
+# APIキー不要
 model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 ```
@@ -42,23 +42,23 @@ agent = Agent(model)
 
 ## 機能比較表
 
-| 機能 | Pydantic AI 標準<br>(AnthropicModel) | pydantic-claude-cli<br>Phase 1 | pydantic-claude-cli<br>Milestone 3 (実験的) |
+| 機能 | Pydantic AI 標準<br>(AnthropicModel) | pydantic-claude-cli<br>基本機能 (v0.2+) | pydantic-claude-cli<br>実験的機能 (v0.2+) (実験的) |
 |------|-----------------------------------|------------------------------|----------------------------------------|
 | **基本機能** |
-| テキスト会話 | ✅ 完全対応 | ✅ 完全対応 | ✅ 完全対応 |
-| システムプロンプト | ✅ 完全対応 | ✅ 完全対応 | ✅ 完全対応 |
-| 会話履歴 | ✅ 完全対応 | ✅ 対応 | ✅ 対応 |
-| ストリーミング | ✅ 完全対応 | ❌ 未対応 | ❌ 未対応 |
+| テキスト会話 | ✅ 対応 | ✅ 対応 | ✅ 対応 |
+| システムプロンプト | ✅ 対応 | ✅ 対応 | ✅ 対応 |
+| 会話履歴 | ✅ 対応 | ✅ 対応 | ✅ 対応 |
+| ストリーミング | ✅ 対応 | ❌ 未対応 | ❌ 未対応 |
 | **認証** |
 | APIキー | ✅ 必要 | ❌ 不要 | ❌ 不要 |
 | Claude Code ログイン | ❌ 不要 | ✅ 必要 | ✅ 必要 |
 | **カスタムツール** |
-| 依存性なしツール | ✅ 完全対応 | ✅ **完全対応（v0.2+）** | ✅ **完全対応** |
-| RunContext（シリアライズ可能deps） | ✅ 完全対応 | ❌ 未対応 | ✅ **実験的対応** |
-| RunContext（非シリアライズdeps） | ✅ 完全対応 | ❌ 未対応 | ❌ 未対応 |
-| `ctx.deps` | ✅ 完全対応 | ❌ 未対応 | ✅ **対応** |
-| `ctx.retry()` | ✅ 完全対応 | ❌ 未対応 | ❌ 未対応 |
-| `ctx.run_step` | ✅ 完全対応 | ❌ 未対応 | ❌ 未対応 |
+| 依存性なしツール | ✅ 対応 | ✅ **対応（v0.2+）** | ✅ **対応** |
+| RunContext（シリアライズ可能deps） | ✅ 対応 | ❌ 未対応 | ✅ **実験的対応** |
+| RunContext（非シリアライズdeps） | ✅ 対応 | ❌ 未対応 | ❌ 未対応 |
+| `ctx.deps` | ✅ 対応 | ❌ 未対応 | ✅ **対応** |
+| `ctx.retry()` | ✅ 対応 | ❌ 未対応 | ❌ 未対応 |
+| `ctx.run_step` | ✅ 対応 | ❌ 未対応 | ❌ 未対応 |
 | **マルチモーダル** |
 | 画像 | ✅ 対応 | ❌ 未対応 | ❌ 未対応 |
 | PDF | ✅ 対応 | ❌ 未対応 | ❌ 未対応 |
@@ -89,7 +89,7 @@ agent = Agent(model)
 | 実験的フラグ | 不要 | 不要 | `enable_experimental_deps=True` |
 
 ### 凡例
-- ✅ 完全対応・推奨
+- ✅ 対応・推奨
 - ⚠️ 部分対応・制限あり
 - ❌ 未対応
 - ❓ 不明・未確認
@@ -188,7 +188,7 @@ print(result.output)  # 全体が一度に返る
 
 ### 3. カスタムツール
 
-#### Pydantic AI 標準（完全サポート）
+#### Pydantic AI 標準（サポート）
 
 ```python
 from pydantic_ai import Agent, RunContext
@@ -197,7 +197,7 @@ from pydantic_ai.models.anthropic import AnthropicModel
 model = AnthropicModel('claude-haiku-4-5')
 agent = Agent(model, deps_type=dict)
 
-# RunContext依存ツール（完全サポート）
+# RunContext依存ツール（サポート）
 @agent.tool
 async def get_weather(ctx: RunContext[dict], city: str) -> str:
     """都市の天気を取得"""
@@ -217,7 +217,7 @@ print(result.output)
 - ✅ 自動的にスキーマ生成
 - ✅ 複数ツールの組み合わせ
 
-#### pydantic-claude-cli Phase 1（依存性なしツールのみ）
+#### pydantic-claude-cli 基本機能 (v0.2+)（依存性なしツールのみ）
 
 ```python
 from pydantic_ai import Agent
@@ -226,10 +226,10 @@ from pydantic_claude_cli import ClaudeCodeCLIModel
 model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 
-# toolsetsを設定（重要！）
+# toolsetsを設定（重要）
 model.set_agent_toolsets(agent._function_toolset)
 
-# 依存性なしツール（✅ v0.2+で動作！）
+# 依存性なしツール（✅ v0.2+で動作）
 @agent.tool_plain
 def calculate(x: int, y: int) -> int:
     """計算ツール"""
@@ -238,18 +238,18 @@ def calculate(x: int, y: int) -> int:
 # ツールを使用
 result = await agent.run('5 + 3を計算して')
 print(result.output)
-# → ツールが実際に呼び出される！
+# → ツールが実際に呼び出される
 ```
 
 **特徴**:
-- ✅ **依存性なしツールは完全対応（v0.2+）**
+- ✅ **依存性なしツールは対応（v0.2+）**
 - ✅ 型安全
 - ✅ 自動的にスキーマ生成
 - ✅ 複数ツールの組み合わせ
 - ❌ RunContext依存は未対応
 - ⚠️ `set_agent_toolsets()`の手動呼び出しが必要
 
-#### pydantic-claude-cli Milestone 3（実験的依存性サポート）
+#### pydantic-claude-cli 実験的機能 (v0.2+)（実験的依存性サポート）
 
 ```python
 from pydantic import BaseModel
@@ -265,7 +265,7 @@ model = ClaudeCodeCLIModel('claude-haiku-4-5', enable_experimental_deps=True)
 agent = ClaudeCodeCLIAgent(model, deps_type=ApiConfig)
 model.set_agent_toolsets(agent._function_toolset)
 
-# RunContext依存ツール（✅ Milestone 3で動作！）
+# RunContext依存ツール（✅ 実験的機能 (v0.2+)で動作）
 @agent.tool
 async def get_weather(ctx: RunContext[ApiConfig], city: str) -> str:
     """都市の天気を取得"""
@@ -291,8 +291,8 @@ print(result.output)
 - ⚠️ 実験的機能（安定版候補）
 
 **結論**:
-- **依存性なしツール**: Phase 1で完全対応 ✅
-- **シリアライズ可能な依存性**: Milestone 3で実験的対応 ✅
+- **依存性なしツール**: 基本機能 (v0.2+)で対応 ✅
+- **シリアライズ可能な依存性**: 実験的機能 (v0.2+)で実験的対応 ✅
 - **完全なRunContextサポート**: Pydantic AI標準を使用
 
 ---
@@ -507,7 +507,7 @@ RUN yum install -y nodejs npm
 # Claude Code CLIをインストール
 RUN npm install -g @anthropic-ai/claude-code
 
-# 認証情報をコピー（問題あり！）
+# 認証情報をコピー（問題あり）
 COPY .claude/config.json /root/.claude/
 
 COPY requirements.txt .
@@ -648,13 +648,13 @@ CMD ["python", "app.py"]
   │
 シリアライズ可能な依存性（dict, Pydanticモデル等）が必要？
   │
-  ├─Yes─▶ pydantic-claude-cli Milestone 3（実験的）
+  ├─Yes─▶ pydantic-claude-cli 実験的機能 (v0.2+)（実験的）
   │
   ▼ No
   │
 依存性なしのカスタムツールが必要？
   │
-  ├─Yes─▶ pydantic-claude-cli Phase 1
+  ├─Yes─▶ pydantic-claude-cli 基本機能 (v0.2+)
   │
   ▼ No
   │
@@ -676,7 +676,7 @@ APIキーを管理できる？
   │
   ▼ No
   │
-pydantic-claude-cli Phase 1
+pydantic-claude-cli 基本機能 (v0.2+)
 ```
 
 ---
@@ -739,14 +739,14 @@ agent = Agent(model)
 以下が使用されている場合は完全移行できません（部分的に対応可能）：
 
 - ⚠️ **RunContext依存のカスタムツール（`@agent.tool`）**
-  - シリアライズ可能な依存性: Milestone 3で実験的対応 ✅
+  - シリアライズ可能な依存性: 実験的機能 (v0.2+)で実験的対応 ✅
   - 非シリアライズ可能な依存性: 未対応 ❌
 - ❌ **ストリーミング（`run_stream`）** - 未対応
 - ❌ **マルチモーダル（画像、PDF等）** - 未対応
 
 **完全移行可能な機能**:
 - ✅ 依存性なしのカスタムツール（`@agent.tool_plain`）
-- ✅ シリアライズ可能な依存性を使うカスタムツール（Milestone 3）
+- ✅ シリアライズ可能な依存性を使うカスタムツール（実験的機能 (v0.2+)）
 
 ### pydantic-claude-cli → Pydantic AI 標準
 
@@ -864,15 +864,15 @@ dev_agent = Agent(dev_model)
 **A**: 段階的にサポート済み・予定です。
 
 **実装済み**:
-- ✅ **カスタムツール（依存性なし）**: Phase 1で実装済み（v0.2+）
-- ✅ **カスタムツール（シリアライズ可能な依存性）**: Milestone 3で実験的実装済み
+- ✅ **カスタムツール（依存性なし）**: 基本機能 (v0.2+)で実装済み（v0.2+）
+- ✅ **カスタムツール（シリアライズ可能な依存性）**: 実験的機能 (v0.2+)で実験的実装済み
 
 **実装予定**:
 - 🔄 **ストリーミング**: 将来のバージョンで検討
 - 🔄 **完全なRunContextサポート**: Pydantic AIへのFeature Request提出予定
 - ❓ **マルチモーダル**: Claude Code SDKの対応次第
 
-**Milestone 3の位置づけ**:
+**実験的機能 (v0.2+)の位置づけ**:
 - 動作確認: ✅ 完了（85テスト合格、E2E動作確認済み）
 - ステータス: 実験的機能（安定版候補）
 - 推奨用途: プロトタイプ、開発環境、非本番環境

@@ -68,11 +68,11 @@
 │  │  - extract_python_types(): 型変換                 │       │
 │  │  - format_tool_result(): MCP形式変換              │       │
 │  │  - create_mcp_from_tools(): MCPサーバー作成       │       │
-│  │    + deps_data, deps_type (Milestone 3)          │       │
+│  │    + deps_data, deps_type (実験的機能 (v0.2+))          │       │
 │  └──────────────────────────────────────────────────┘       │
 │                         │                                      │
 │  ┌──────────────────────────────────────────────────┐       │
-│  │ deps_context (Milestone 3)                        │       │
+│  │ deps_context (実験的機能 (v0.2+))                        │       │
 │  │                                                    │       │
 │  │  - set_current_deps(): ContextVar設定             │       │
 │  │  - get_current_deps(): ContextVar取得             │       │
@@ -80,7 +80,7 @@
 │  └──────────────────────────────────────────────────┘       │
 │                         │                                      │
 │  ┌──────────────────────────────────────────────────┐       │
-│  │ deps_support (Milestone 3)                        │       │
+│  │ deps_support (実験的機能 (v0.2+))                        │       │
 │  │                                                    │       │
 │  │  - is_serializable_deps(): 可能性チェック         │       │
 │  │  - serialize_deps(): シリアライズ                 │       │
@@ -88,14 +88,14 @@
 │  └──────────────────────────────────────────────────┘       │
 │                         │                                      │
 │  ┌──────────────────────────────────────────────────┐       │
-│  │ emulated_run_context (Milestone 3)                │       │
+│  │ emulated_run_context (実験的機能 (v0.2+))                │       │
 │  │                                                    │       │
 │  │  - EmulatedRunContext[DepsT]                      │       │
 │  │    + deps プロパティのみ提供                      │       │
 │  └──────────────────────────────────────────────────┘       │
 │                         │                                      │
 │  ┌──────────────────────────────────────────────────┐       │
-│  │ claude_code_cli_agent (Milestone 3)               │       │
+│  │ claude_code_cli_agent (実験的機能 (v0.2+))               │       │
 │  │                                                    │       │
 │  │  - ClaudeCodeCLIAgent[DepsT]                      │       │
 │  │    + run(): ContextVar設定/クリーンアップ         │       │
@@ -646,15 +646,15 @@ sequenceDiagram
     Agent-->>User: result.data = "8"
 ```
 
-### Phase 1の制約事項
+### 基本機能 (v0.2+)の制約事項
 
-**サポート対象（Phase 1）**:
+**サポート対象（基本機能 (v0.2+)）**:
 - 依存性なしツール（`@agent.tool_plain`）
 - 基本型の引数（str, int, float, bool, list, dict）
 - Pydanticモデルの引数
 - 同期・非同期ツール
 
-**実験的サポート（Milestone 3）**:
+**実験的サポート（実験的機能 (v0.2+)）**:
 - RunContext依存ツール（`@agent.tool`）
 - 依存性注入（`ctx.deps`へのアクセス）
 - シリアライズ可能な依存性（dict, Pydanticモデル, dataclass）
@@ -667,7 +667,7 @@ sequenceDiagram
 
 ---
 
-## Milestone 3: 実験的依存性サポートアーキテクチャ
+## 実験的機能 (v0.2+): 実験的依存性サポートアーキテクチャ
 
 ### 依存性転送フロー
 

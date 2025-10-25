@@ -95,17 +95,17 @@ async def async_process(data: str) -> str:
 
 ### RunContext依存ツールのサポート状況
 
-#### Phase 1: 依存性なしツールのみ
+#### 基本機能（v0.2+）
 
-**基本実装では、`@agent.tool_plain`のみサポート**:
+**`@agent.tool_plain`（依存性なし）のみサポート**:
 
 ```python
-# ✅ これは動作します（Phase 1）
+# ✅ サポート対象
 @agent.tool_plain
 def calculate(x: int, y: int) -> int:
     return x + y
 
-# ❌ これは動作しません（Phase 1）
+# ❌ 未サポート（基本機能）
 from pydantic_ai.tools import RunContext
 
 @agent.tool
@@ -113,15 +113,15 @@ async def query_db(ctx: RunContext[DB], id: int) -> str:
     return await ctx.deps.query(id)
 ```
 
-#### Milestone 3: 実験的依存性サポート
+#### 実験的機能（v0.2+）
 
-**シリアライズ可能な依存性のみサポート（実験的機能）**:
+**シリアライズ可能な依存性のみサポート（実験的）**:
 
 ```python
 from pydantic_ai import RunContext
 from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
 
-# ✅ これは動作します（Milestone 3）
+# ✅ 実験的機能でサポート
 model = ClaudeCodeCLIModel('...', enable_experimental_deps=True)
 agent = ClaudeCodeCLIAgent(model, deps_type=dict)
 model.set_agent_toolsets(agent._function_toolset)
@@ -135,7 +135,7 @@ result = await agent.run("Get API key", deps={"api_key": "abc"})
 
 **詳細**: [実験的依存性サポート](experimental-deps.md)
 
-#### 完全なRunContextサポート
+#### Pydantic AI標準でのサポート
 
 **すべての機能が必要な場合**:
 
@@ -149,8 +149,8 @@ agent = Agent(model, deps_type=httpx.AsyncClient)
 
 @agent.tool
 async def fetch(ctx: RunContext[httpx.AsyncClient], url: str) -> str:
-    response = await ctx.deps.get(url)  # ✅ 完全サポート
-    ctx.retry("Retrying...")  # ✅ 完全サポート
+    response = await ctx.deps.get(url)  # ✅ すべての機能をサポート
+    ctx.retry("Retrying...")  # ✅ すべての機能をサポート
     return response.text
 ```
 

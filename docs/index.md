@@ -14,8 +14,8 @@ Pydantic AI モデルプロバイダーを提供します。
 - ✅ **シームレスな統合**: Pydantic AI の標準インターフェースを実装
 - ✅ **簡単なセットアップ**: `claude login` だけで使用開始
 - ✅ **カスタムツールサポート**:
-  - Phase 1: 依存性なしツールが完全動作（v0.2+）
-  - Milestone 3: 実験的依存性サポート（シリアライズ可能な依存性）
+  - 依存性なしツール（v0.2+）
+  - 実験的依存性サポート（v0.2+、シリアライズ可能な依存性のみ）
 
 ## ドキュメント
 
@@ -65,7 +65,7 @@ print(result.data)
 
 ### カスタムツールの使用（v0.2+）
 
-依存性なしツール（`@agent.tool_plain`）が**完全に動作します**：
+依存性なしツール（`@agent.tool_plain`）がサポートされています（v0.2+）：
 
 ```python
 from pydantic_ai import Agent
@@ -95,14 +95,14 @@ print(result.data)
 ```
 
 **機能レベル**:
-- **Phase 1**: 依存性なしツール（`@agent.tool_plain`）- 完全対応 ✅
-- **Milestone 3**: RunContext依存ツール（`@agent.tool`）- 実験的対応 ⚠️
+- **基本機能（v0.2+）**: 依存性なしツール（`@agent.tool_plain`）✅
+- **実験的機能（v0.2+）**: RunContext依存ツール（`@agent.tool`）⚠️
   - シリアライズ可能な依存性のみ（dict, Pydanticモデル, dataclass）
   - 詳細は [実験的依存性サポート](experimental-deps.md) を参照
 
 **詳細ガイド**:
-- [カスタムツール](custom-tools.md) - Phase 1の完全ガイド
-- [実験的依存性サポート](experimental-deps.md) - Milestone 3の使い方
+- [カスタムツール](custom-tools.md) - 基本機能のガイド
+- [実験的依存性サポート](experimental-deps.md) - 実験的機能の使い方
 
 ## リンク
 

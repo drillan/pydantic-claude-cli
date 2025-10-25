@@ -1,15 +1,15 @@
 # pydantic-claude-cli
 
-**Pydantic AI用のClaude Code CLIアダプター** - APIキー不要でClaudeモデルを使用！
+**Pydantic AI用のClaude Code CLIアダプター** - APIキー不要でClaudeモデルを使用
 
 このパッケージを使用すると、[Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)を介して[Pydantic AI](https://ai.pydantic.dev/)でClaudeモデルを使用でき、Anthropic APIキーが不要になります。
 
 ## 特徴
 
 - ✅ **簡単統合** - Pydantic AIモデルのドロップイン置き換え
-- ✅ **テキストベース会話** - テキストチャットを完全サポート
-- ✅ **カスタムツール** - 依存性なしツールを完全サポート（v0.2+）
-- ✅ **実験的依存性サポート** - シリアライズ可能な依存性をサポート（Milestone 3）
+- ✅ **テキストベース会話** - テキストチャットをサポート
+- ✅ **カスタムツール** - 依存性なしツールをサポート（v0.2+）
+- ✅ **実験的依存性サポート** - シリアライズ可能な依存性をサポート（実験的機能、v0.2+）
 - ⚠️ **マルチモーダル** - 画像/ファイル未対応
 
 ## 必要要件
@@ -50,7 +50,7 @@ from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
 async def main():
-    # モデルインスタンス作成 - APIキー不要！
+    # モデルインスタンス作成 - APIキー不要
     model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
 
     # Pydantic AI Agentで使用
@@ -60,7 +60,7 @@ async def main():
     )
 
     # クエリ実行
-    result = await agent.run('こんにちは、Claude！')
+    result = await agent.run('こんにちは、Claude')
     print(result.output)
 
 if __name__ == '__main__':
@@ -134,7 +134,7 @@ print(result.output)
 - ✅ 複数ツールの連携
 - ✅ 実際のツール呼び出し確認済み
 
-**実験的機能（Milestone 3）**:
+**実験的機能（v0.2+）**:
 - ✅ 依存性注入（RunContext + deps）のサポート
 - ✅ シリアライズ可能な依存性（dict, Pydanticモデル、dataclass）
 - ⚠️ 非シリアライズ可能な依存性（httpx, DB接続等）は未サポート
@@ -146,9 +146,9 @@ print(result.output)
 
 詳細は：
 - [カスタムツールガイド](https://pydantic-claude-cli.readthedocs.io/ja/latest/custom-tools.html)
-- [実験的依存性サポート](https://pydantic-claude-cli.readthedocs.io/ja/latest/experimental-deps.html) - Milestone 3
+- [実験的依存性サポート](https://pydantic-claude-cli.readthedocs.io/ja/latest/experimental-deps.html)
 - [examples/custom_tools_basic.py](examples/custom_tools_basic.py)
-- [examples/experimental_deps_basic.py](examples/experimental_deps_basic.py) - Milestone 3
+- [examples/experimental_deps_basic.py](examples/experimental_deps_basic.py)
 
 ### エラーハンドリング
 
@@ -163,7 +163,7 @@ from pydantic_claude_cli import (
 try:
     model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
     agent = Agent(model)
-    result = await agent.run('こんにちは！')
+    result = await agent.run('こんにちは')
 except ClaudeCLINotFoundError:
     print('Claude CLIが見つかりません。インストールしてください。')
 except ClaudeCLIProcessError as e:
@@ -198,15 +198,15 @@ Claude Code CLIがサポートするすべてのClaudeモデルを使用でき�
 
 ### 未対応機能
 
-- ⚠️ **完全なRunContextサポート** - `ctx.retry()`, `ctx.run_step`等は未サポート（実験的deps機能でdepsのみ利用可能）
+- ⚠️ **RunContextのすべての機能** - `ctx.retry()`, `ctx.run_step`等は未サポート（実験的deps機能でdepsのみ利用可能）
 - ❌ **非シリアライズ可能な依存性** - httpx.AsyncClient、DB接続等は未サポート（設定のみ渡してツール内で再作成可能）
 - ❌ **マルチモーダルコンテンツ** - 画像、ファイル、その他メディア未対応
 - ❌ **ストリーミングレスポンス** - 現在は非ストリーミングリクエストのみ
 
 ### 対応済み機能
 
-- ✅ **テキストベースのQ&A** - テキスト会話を完全サポート
-- ✅ **カスタムツール（Phase 1）** - 依存性なしツールが完全動作
+- ✅ **テキストベースのQ&A** - テキスト会話をサポート
+- ✅ **カスタムツール（基本機能、v0.2+）** - 依存性なしツールが動作
 - ✅ **システムプロンプト** - モデルへのカスタム指示
 - ✅ **会話履歴** - マルチターン会話
 - ✅ **エラーハンドリング** - 包括的なエラーメッセージ
@@ -295,7 +295,7 @@ uv run python examples/basic_usage.py
    - ツール内でのlogfire.info()使用
    - 複数ツール連携のトレース
 
-すべてのサンプルは実際に動作確認済みです。
+すべてのサンプルは動作確認済みです。
 
 ### テスト実行
 

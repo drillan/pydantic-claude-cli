@@ -74,7 +74,7 @@ result = await agent.run('Use my_tool with x=5')
 
 ## Pydantic Logfire統合
 
-**pydantic-claude-cliはPydantic Logfireに完全対応しています！**
+**pydantic-claude-cliはPydantic Logfireに対応しています！**
 
 `ClaudeCodeCLIModel`がPydantic AIの`Model`抽象クラスを実装しているため、
 `logfire.instrument_pydantic_ai()`が**自動的に動作**します。追加の設定は不要です。
@@ -305,11 +305,11 @@ logging.basicConfig(level=logging.INFO)
 
 ---
 
-## Milestone 3モジュールのロギング
+## 実験的機能 (v0.2+)モジュールのロギング
 
 ### 実験的依存性サポートのロギング
 
-Milestone 3の依存性サポートモジュールも標準ライブラリloggingを使用しています。
+実験的機能 (v0.2+)の依存性サポートモジュールも標準ライブラリloggingを使用しています。
 
 #### ロガー一覧
 
@@ -382,4 +382,4 @@ logger.info("Checking serializability (type: %s)", deps_type)
 - [Pydantic Logfire](https://logfire.pydantic.dev/)
 - [OpenTelemetry for Python](https://opentelemetry.io/docs/languages/python/)
 - [Python logging](https://docs.python.org/ja/3/library/logging.html)
-- [実験的依存性サポート](experimental-deps.md) - Milestone 3の詳細
+- [実験的依存性サポート](experimental-deps.md) - 実験的機能 (v0.2+)の詳細
