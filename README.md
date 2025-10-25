@@ -9,6 +9,7 @@
 - ✅ **簡単統合** - Pydantic AIモデルのドロップイン置き換え
 - ✅ **テキストベース会話** - テキストチャットを完全サポート
 - ✅ **カスタムツール** - 依存性なしツールを完全サポート（v0.2+）
+- ✅ **実験的依存性サポート** - シリアライズ可能な依存性をサポート（Milestone 3）
 - ⚠️ **マルチモーダル** - 画像/ファイル未対応
 
 ## 必要要件
@@ -133,13 +134,21 @@ print(result.output)
 - ✅ 複数ツールの連携
 - ✅ 実際のツール呼び出し確認済み
 
-**制限事項**:
-- ⚠️ `RunContext`依存ツール（`@agent.tool`）は未サポート
+**実験的機能（Milestone 3）**:
+- ✅ 依存性注入（RunContext + deps）のサポート
+- ✅ シリアライズ可能な依存性（dict, Pydanticモデル、dataclass）
+- ⚠️ 非シリアライズ可能な依存性（httpx, DB接続等）は未サポート
+- ⚠️ EmulatedRunContext（`ctx.deps`のみ、`ctx.retry()`等は未サポート）
+
+**使用要件**:
 - ⚠️ Agent作成後に`set_agent_toolsets()`の手動呼び出しが必要
+- ⚠️ 実験的機能使用時は`ClaudeCodeCLIAgent` + `enable_experimental_deps=True`が必要
 
 詳細は：
 - [カスタムツールガイド](https://pydantic-claude-cli.readthedocs.io/ja/latest/custom-tools.html)
+- [実験的依存性サポート](https://pydantic-claude-cli.readthedocs.io/ja/latest/experimental-deps.html) - Milestone 3
 - [examples/custom_tools_basic.py](examples/custom_tools_basic.py)
+- [examples/experimental_deps_basic.py](examples/experimental_deps_basic.py) - Milestone 3
 
 ### エラーハンドリング
 
@@ -189,7 +198,8 @@ Claude Code CLIがサポートするすべてのClaudeモデルを使用でき�
 
 ### 未対応機能
 
-- ⚠️ **RunContext依存ツール** - `@agent.tool`（依存性注入）は未サポート
+- ⚠️ **完全なRunContextサポート** - `ctx.retry()`, `ctx.run_step`等は未サポート（実験的deps機能でdepsのみ利用可能）
+- ❌ **非シリアライズ可能な依存性** - httpx.AsyncClient、DB接続等は未サポート（設定のみ渡してツール内で再作成可能）
 - ❌ **マルチモーダルコンテンツ** - 画像、ファイル、その他メディア未対応
 - ❌ **ストリーミングレスポンス** - 現在は非ストリーミングリクエストのみ
 

@@ -744,10 +744,17 @@ User: result.data = "8"
 - IPCオーバーヘッドがない
 - デバッグが容易
 
-**制限事項の理由**:
+**制限事項と対応状況**:
+
+**Phase 1の制限**:
 - RunContext依存ツールは、CLI経由では`ctx.deps`にアクセスできない
 - プロセス境界を超えて依存性を渡すことが困難
-- Phase 3で実験的サポートを検討中
+
+**Milestone 3の解決策（実験的）**:
+- ✅ ContextVarを使用して依存性を転送
+- ✅ シリアライズ可能な依存性のみサポート
+- ✅ `ClaudeCodeCLIAgent`でContextVarを管理
+- 詳細: [実験的依存性サポート](experimental-deps.md)
 
 ---
 

@@ -305,8 +305,81 @@ logging.basicConfig(level=logging.INFO)
 
 ---
 
+## Milestone 3モジュールのロギング
+
+### 実験的依存性サポートのロギング
+
+Milestone 3の依存性サポートモジュールも標準ライブラリloggingを使用しています。
+
+#### ロガー一覧
+
+```python
+# deps_context
+logger = logging.getLogger('pydantic_claude_cli.deps_context')
+
+# deps_support
+logger = logging.getLogger('pydantic_claude_cli.deps_support')
+
+# emulated_run_context
+logger = logging.getLogger('pydantic_claude_cli.emulated_run_context')
+
+# claude_code_cli_agent
+logger = logging.getLogger('pydantic_claude_cli.claude_code_cli_agent')
+```
+
+#### ログ出力例
+
+```python
+import logging
+from pydantic import BaseModel
+from pydantic_ai import RunContext
+from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
+
+# DEBUGレベルでログを有効化
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+class Config(BaseModel):
+    api_key: str
+
+model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929', enable_experimental_deps=True)
+agent = ClaudeCodeCLIAgent(model, deps_type=Config)
+model.set_agent_toolsets(agent._function_toolset)
+
+@agent.tool
+async def get_data(ctx: RunContext[Config]) -> str:
+    return "data"
+
+result = await agent.run("Test", deps=Config(api_key="abc"))
+```
+
+**出力例**:
+```
+INFO - pydantic_claude_cli.model - Experimental deps support enabled, checking serializability (type: <class 'Config'>)
+INFO - pydantic_claude_cli.deps_support - Serializing Pydantic model
+INFO - pydantic_claude_cli.model - Successfully serialized dependencies for MCP tools
+INFO - pydantic_claude_cli.tool_converter - Creating MCP server 'pydantic-custom-tools' with 1 tools
+```
+
+#### 重要な注意事項
+
+**セキュリティ**: 依存性の値（API key等）はログに出力されません。型情報のみ記録されます。
+
+```python
+# ✅ 安全: 型情報のみ記録
+logger.info("Checking serializability (type: %s)", deps_type)
+
+# ❌ 実装されていない: 値は記録しない
+# logger.debug("deps value: %s", deps)  # これは実装されていません
+```
+
+---
+
 ## 参考資料
 
 - [Pydantic Logfire](https://logfire.pydantic.dev/)
 - [OpenTelemetry for Python](https://opentelemetry.io/docs/languages/python/)
 - [Python logging](https://docs.python.org/ja/3/library/logging.html)
+- [実験的依存性サポート](experimental-deps.md) - Milestone 3の詳細

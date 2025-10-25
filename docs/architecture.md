@@ -68,6 +68,37 @@
 │  │  - extract_python_types(): 型変換                 │       │
 │  │  - format_tool_result(): MCP形式変換              │       │
 │  │  - create_mcp_from_tools(): MCPサーバー作成       │       │
+│  │    + deps_data, deps_type (Milestone 3)          │       │
+│  └──────────────────────────────────────────────────┘       │
+│                         │                                      │
+│  ┌──────────────────────────────────────────────────┐       │
+│  │ deps_context (Milestone 3)                        │       │
+│  │                                                    │       │
+│  │  - set_current_deps(): ContextVar設定             │       │
+│  │  - get_current_deps(): ContextVar取得             │       │
+│  │  - get_current_deps_with_type(): 型情報付き取得   │       │
+│  └──────────────────────────────────────────────────┘       │
+│                         │                                      │
+│  ┌──────────────────────────────────────────────────┐       │
+│  │ deps_support (Milestone 3)                        │       │
+│  │                                                    │       │
+│  │  - is_serializable_deps(): 可能性チェック         │       │
+│  │  - serialize_deps(): シリアライズ                 │       │
+│  │  - deserialize_deps(): デシリアライズ             │       │
+│  └──────────────────────────────────────────────────┘       │
+│                         │                                      │
+│  ┌──────────────────────────────────────────────────┐       │
+│  │ emulated_run_context (Milestone 3)                │       │
+│  │                                                    │       │
+│  │  - EmulatedRunContext[DepsT]                      │       │
+│  │    + deps プロパティのみ提供                      │       │
+│  └──────────────────────────────────────────────────┘       │
+│                         │                                      │
+│  ┌──────────────────────────────────────────────────┐       │
+│  │ claude_code_cli_agent (Milestone 3)               │       │
+│  │                                                    │       │
+│  │  - ClaudeCodeCLIAgent[DepsT]                      │       │
+│  │    + run(): ContextVar設定/クリーンアップ         │       │
 │  └──────────────────────────────────────────────────┘       │
 │                         │                                      │
 │  ┌──────────────────────────────────────────────────┐       │
@@ -617,15 +648,83 @@ sequenceDiagram
 
 ### Phase 1の制約事項
 
-**サポート対象**:
+**サポート対象（Phase 1）**:
 - 依存性なしツール（`@agent.tool_plain`）
 - 基本型の引数（str, int, float, bool, list, dict）
 - Pydanticモデルの引数
 - 同期・非同期ツール
 
-**非サポート**:
+**実験的サポート（Milestone 3）**:
 - RunContext依存ツール（`@agent.tool`）
 - 依存性注入（`ctx.deps`へのアクセス）
+- シリアライズ可能な依存性（dict, Pydanticモデル, dataclass）
+
+**非サポート**:
+- 非シリアライズ可能な依存性（httpx, DB接続等）
+- `ctx.retry()`, `ctx.run_step`等のRunContextメソッド
 - ModelRetryの伝播
-- ツール実行のリトライ制御
+```
+
+---
+
+## Milestone 3: 実験的依存性サポートアーキテクチャ
+
+### 依存性転送フロー
+
+```
+User Code:
+  ClaudeCodeCLIAgent.run(deps={"api_key": "abc"})
+    ↓
+  ContextVar.set(DepsData(deps=..., deps_type=dict))
+    ↓
+  Agent.run() (通常のPydantic AIフロー)
+    ↓
+  ClaudeCodeCLIModel.request()
+    ↓
+  ContextVar.get() → DepsData(deps=..., deps_type=dict)
+    ↓
+  serialize_deps(deps) → JSON文字列
+    ↓
+  create_mcp_from_tools(tools, deps_data=..., deps_type=...)
+    ↓
+  MCP Server (in-process)
+    ↓
+  Tool実行時:
+    deserialize_deps(deps_data, deps_type) → オブジェクト復元
+    ↓
+    EmulatedRunContext(deps=オブジェクト)
+    ↓
+    tool_func(ctx=ctx, **args)
+```
+
+### 主要コンポーネント
+
+#### 1. ClaudeCodeCLIAgent
+- `Agent[DepsT]`を継承
+- `run()`と`run_sync()`をオーバーライド
+- ContextVarに依存性と型情報を設定
+- `finally`で確実にクリーンアップ
+
+#### 2. ContextVar管理（deps_context）
+- `DepsData`: 依存性と型情報を保持
+- `set_current_deps()`: ContextVarに設定
+- `get_current_deps_with_type()`: 型情報付きで取得
+- Pydantic AIの`_messages_ctx_var`と同じパターン
+
+#### 3. シリアライズ/デシリアライズ（deps_support）
+- `is_serializable_deps()`: 型チェック
+- `serialize_deps()`: JSON文字列に変換（Pydanticモデル、dataclass対応）
+- `deserialize_deps()`: 型情報を使って復元
+
+#### 4. EmulatedRunContext
+- `RunContext`の制限版エミュレーション
+- `deps`プロパティのみ提供
+- 未サポートプロパティへのアクセスで明確なエラー
+
+### セキュリティ考慮事項
+
+- ContextVarはasyncioタスク単位で分離される
+- In-process MCPサーバー（プロセス間通信なし）
+- 使用後は`reset()`で確実にクリーンアップ
+- 依存性はログに出力されない（実装で保証）
 ```

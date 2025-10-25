@@ -127,11 +127,15 @@ def _make_async(func: Callable[..., Any]) -> Callable[..., Any]:
 
 def create_mcp_from_tools(
     tools_with_funcs: list[tuple[ToolDefinition, Callable[..., Any]]],
+    deps_data: str | None = None,
+    deps_type: type | None = None,
 ) -> McpSdkServerConfig:
-    """ツールリストからMCPサーバーを作成する
+    """ツールリストからMCPサーバーを作成する（依存性サポート付き）
 
     Args:
         tools_with_funcs: (ToolDefinition, 実行関数)のペアリスト
+        deps_data: シリアライズされた依存性（JSON文字列、Milestone 3）
+        deps_type: 依存性の型（デシリアライズに使用）
 
     Returns:
         McpSdkServerConfig dict
@@ -153,6 +157,10 @@ def create_mcp_from_tools(
         >>> server = create_mcp_from_tools([(tool_def, add)])
         >>> # ClaudeCodeOptionsに渡す
         >>> # options = ClaudeCodeOptions(mcp_servers={"custom": server})
+
+    Note:
+        Milestone 3: deps_dataが指定されている場合、
+        RunContext依存ツールに対してEmulatedRunContextを提供します。
     """
     sdk_tools = []
 
@@ -166,22 +174,46 @@ def create_mcp_from_tools(
         else:
             async_func = func
 
+        # RunContext依存性をチェック（Milestone 3）
+        from .tool_support import requires_run_context
+
+        needs_context = requires_run_context(func)
+
         # SDK MCPツールを作成
         # NOTE: Pythonのクロージャの問題を回避するため、
         # デフォルト引数で関数を束縛する
         @sdk_tool(tool_def.name, tool_def.description or "", input_schema)
         async def wrapped(
-            args: dict[str, Any], _func: Callable[..., Any] = async_func
+            args: dict[str, Any],
+            _func: Callable[..., Any] = async_func,
+            _needs_ctx: bool = needs_context,
+            _deps: str | None = deps_data,
+            _deps_type: type | None = deps_type,
         ) -> dict[str, Any]:
             """MCPツールのラッパー関数"""
             try:
-                # 関数を実行
-                result = await _func(**args)
+                # Milestone 3: RunContext依存の場合はエミュレート
+                if _needs_ctx and _deps:
+                    from .deps_support import deserialize_deps
+                    from .emulated_run_context import EmulatedRunContext
+
+                    # 依存性をデシリアライズ（型情報を使用）
+                    deps_obj = deserialize_deps(_deps, deps_type=_deps_type)
+
+                    # EmulatedRunContextを作成
+                    ctx = EmulatedRunContext(deps=deps_obj)
+
+                    # ctxを渡して関数を実行
+                    result = await _func(ctx=ctx, **args)
+                else:
+                    # 通常のツール（依存性なし）
+                    result = await _func(**args)
 
                 # 結果をMCP形式に変換
                 return format_tool_result(result)
             except Exception as e:
                 # エラーをMCP形式で返す
+                logger.error("Tool execution error: %s", e, exc_info=True)
                 return {
                     "content": [
                         {"type": "text", "text": f"Tool execution error: {str(e)}"}

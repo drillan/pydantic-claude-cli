@@ -47,7 +47,9 @@ def benchmark_tool_extraction() -> dict[str, Any]:
 
     # ツール定義リスト
     tool_defs = [
-        ToolDefinition(name=f"bench_tool_{i}", description="test", parameters_json_schema={})
+        ToolDefinition(
+            name=f"bench_tool_{i}", description="test", parameters_json_schema={}
+        )
         for i in range(1, 6)
     ]
 
@@ -55,7 +57,9 @@ def benchmark_tool_extraction() -> dict[str, Any]:
     timings = []
     for _ in range(10):
         start = time.perf_counter()
-        results = [find_tool_function(td, [agent._function_toolset]) for td in tool_defs]
+        results = [
+            find_tool_function(td, [agent._function_toolset]) for td in tool_defs
+        ]
         elapsed = time.perf_counter() - start
         timings.append(elapsed)
 
@@ -89,7 +93,10 @@ def benchmark_mcp_server_creation() -> dict[str, Any]:
         tool_def = ToolDefinition(
             name=f"mcp_tool_{i}",
             description=f"Tool {i}",
-            parameters_json_schema={"type": "object", "properties": {"x": {"type": "integer"}}},
+            parameters_json_schema={
+                "type": "object",
+                "properties": {"x": {"type": "integer"}},
+            },
         )
         tools_with_funcs.append((tool_def, func))
 
@@ -197,8 +204,12 @@ def main() -> None:
     # メモリ使用量
     print("【3】メモリ使用量")
     result3 = benchmark_memory_usage()
-    print(f"  Model: {result3['model_size_bytes']:,} bytes ({result3['model_size_mb']:.3f} MB)")
-    print(f"  Agent: {result3['agent_size_bytes']:,} bytes ({result3['agent_size_mb']:.3f} MB)")
+    print(
+        f"  Model: {result3['model_size_bytes']:,} bytes ({result3['model_size_mb']:.3f} MB)"
+    )
+    print(
+        f"  Agent: {result3['agent_size_bytes']:,} bytes ({result3['agent_size_mb']:.3f} MB)"
+    )
     print()
 
     # E2E
@@ -216,7 +227,9 @@ def main() -> None:
     print()
     print(f"ツール抽出:        {result1['avg_ms']:.3f}ms（5ツール）")
     print(f"MCPサーバー作成:   {result2['avg_ms']:.3f}ms（5ツール）")
-    print(f"メモリ使用量:      Model {result3['model_size_mb']:.3f}MB, Agent {result3['agent_size_mb']:.3f}MB")
+    print(
+        f"メモリ使用量:      Model {result3['model_size_mb']:.3f}MB, Agent {result3['agent_size_mb']:.3f}MB"
+    )
     print(f"E2E実行時間:       {result4['elapsed_seconds']:.2f}秒")
     print()
     print("=" * 70)

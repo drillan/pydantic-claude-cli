@@ -72,6 +72,7 @@ class ClaudeCodeCLIModel(Model):
     _agent_toolsets: Any = field(
         default=None, repr=False
     )  # Agent._function_toolsetへの参照
+    _enable_experimental_deps: bool = field(default=False, repr=False)
 
     def __init__(
         self,
@@ -85,6 +86,7 @@ class ClaudeCodeCLIModel(Model):
         max_turns: int | None = None,
         permission_mode: Literal["default", "acceptEdits", "plan", "bypassPermissions"]
         | None = None,
+        enable_experimental_deps: bool = False,
     ):
         """Initialize Claude Code CLI model.
 
@@ -96,11 +98,13 @@ class ClaudeCodeCLIModel(Model):
             cli_path: Optional custom path to Claude CLI executable.
             max_turns: Maximum number of conversation turns (passed to CLI).
             permission_mode: Permission mode for the CLI.
+            enable_experimental_deps: Enable experimental dependency injection support (Milestone 3).
         """
         self._model_name = model_name
         self._cli_path = cli_path
         self._max_turns = max_turns
         self._permission_mode = permission_mode
+        self._enable_experimental_deps = enable_experimental_deps
 
         if isinstance(provider, str):
             if provider == "claude-code-cli":
@@ -166,18 +170,13 @@ class ClaudeCodeCLIModel(Model):
             model_settings, model_request_parameters
         )
 
-        # カスタムツールサポート（Phase 1: 依存性なしツールのみ）
+        # カスタムツールサポート（Phase 1 + Milestone 3: 依存性サポート）
         mcp_server = None
         if model_request_parameters.function_tools:
             from .tool_converter import create_mcp_from_tools
             from .tool_support import extract_tools_from_agent
 
-            # NOTE: 現在の制限事項
-            # agent_toolsetsにアクセスできないため、FunctionToolsetから
-            # 関数を抽出することができません。
-            # この問題は将来のバージョンで解決予定です。
-
-            # とりあえず、output_toolsはサポートしない
+            # output_toolsはサポートしない
             if model_request_parameters.output_tools:
                 raise MessageConversionError(
                     "Output tools are not supported with custom tools in ClaudeCodeCLIModel. "
@@ -193,8 +192,56 @@ class ClaudeCodeCLIModel(Model):
                 model_request_parameters, agent_toolsets=agent_toolsets_list
             )
 
-            # RunContext依存ツールがあればエラー
-            if has_context_tools:
+            # Milestone 3: 依存性サポート（実験的）
+            deps_json: str | None = None
+            deps_type_info: type | None = None
+            if self._enable_experimental_deps and has_context_tools:
+                from .deps_context import get_current_deps_with_type
+                from .deps_support import is_serializable_deps, serialize_deps
+
+                # ContextVarから依存性を取得（型情報も含む）
+                deps_result = get_current_deps_with_type()
+
+                if deps_result is not None:
+                    deps, deps_type_info = deps_result
+                    logger.info(
+                        "Experimental deps support enabled, checking serializability (type: %s)",
+                        deps_type_info,
+                    )
+
+                    # シリアライズ可能かチェック
+                    check_type = (
+                        deps_type_info if deps_type_info is not None else type(deps)
+                    )
+                    if not is_serializable_deps(check_type):
+                        raise MessageConversionError(
+                            "Non-serializable dependencies are not supported with ClaudeCodeCLIModel.\n"
+                            "Only primitive types, dict, list, and Pydantic models are supported.\n\n"
+                            "Non-serializable types:\n"
+                            "  - httpx.AsyncClient, httpx.Client\n"
+                            "  - sqlalchemy.Engine\n"
+                            "  - File handles, sockets, etc.\n\n"
+                            "Workaround: Use serializable configuration and recreate connections in tools."
+                        )
+
+                    # シリアライズ
+                    try:
+                        deps_json = serialize_deps(deps)
+                        logger.info(
+                            "Successfully serialized dependencies for MCP tools"
+                        )
+                    except ValueError as e:
+                        raise MessageConversionError(
+                            f"Failed to serialize dependencies: {e}"
+                        ) from e
+                else:
+                    logger.warning(
+                        "RunContext tools detected but no deps found in ContextVar. "
+                        "Did you use ClaudeCodeCLIAgent?"
+                    )
+
+            # RunContext依存ツールがあり、実験的機能が無効の場合はエラー
+            elif has_context_tools:
                 raise MessageConversionError(
                     "Tools that require RunContext are not supported with ClaudeCodeCLIModel.\n"
                     "Only context-free tools can be used.\n\n"
@@ -207,15 +254,21 @@ class ClaudeCodeCLIModel(Model):
                     "  async def my_tool(ctx: RunContext[DB], x: int) -> str:\n"
                     "      result = await ctx.deps.query(x)  # Cannot access ctx.deps\n"
                     "      return str(result)\n\n"
-                    "Workaround: Use Pydantic AI standard (AnthropicModel) for context-dependent tools."
+                    "Workaround 1: Use Pydantic AI standard (AnthropicModel) for full RunContext support.\n"
+                    "Workaround 2: Enable experimental deps support with enable_experimental_deps=True (Milestone 3)."
                 )
 
-            # MCPサーバー作成
+            # MCPサーバー作成（依存性を渡す）
             if tools_with_funcs:
                 logger.info(
-                    "Creating MCP server for %d custom tools", len(tools_with_funcs)
+                    "Creating MCP server for %d custom tools (deps: %s, type: %s)",
+                    len(tools_with_funcs),
+                    deps_json is not None,
+                    deps_type_info,
                 )
-                mcp_server = create_mcp_from_tools(tools_with_funcs)
+                mcp_server = create_mcp_from_tools(
+                    tools_with_funcs, deps_data=deps_json, deps_type=deps_type_info
+                )
                 logger.debug("MCP server created successfully")
 
         # Convert messages

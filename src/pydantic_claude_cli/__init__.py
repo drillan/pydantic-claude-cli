@@ -24,6 +24,8 @@ Requirements:
     - You must be logged in to Claude Code
 """
 
+from .claude_code_cli_agent import ClaudeCodeCLIAgent
+from .emulated_run_context import EmulatedRunContext
 from .exceptions import (
     ClaudeCLINotFoundError,
     ClaudeCLIProcessError,
@@ -40,6 +42,9 @@ __all__ = [
     # Main exports
     "ClaudeCodeCLIModel",
     "ClaudeCodeCLIProvider",
+    # Experimental: Milestone 3 (Dependency injection support)
+    "ClaudeCodeCLIAgent",
+    "EmulatedRunContext",
     # Exceptions
     "PydanticClaudeCLIError",
     "ClaudeCLINotFoundError",

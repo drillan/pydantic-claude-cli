@@ -13,7 +13,9 @@ Pydantic AI モデルプロバイダーを提供します。
 - ✅ **APIキー不要**: Claude Code CLI が認証を処理
 - ✅ **シームレスな統合**: Pydantic AI の標準インターフェースを実装
 - ✅ **簡単なセットアップ**: `claude login` だけで使用開始
-- ✅ **カスタムツールサポート**: 依存性なしツールが完全動作（v0.2+）
+- ✅ **カスタムツールサポート**:
+  - Phase 1: 依存性なしツールが完全動作（v0.2+）
+  - Milestone 3: 実験的依存性サポート（シリアライズ可能な依存性）
 
 ## ドキュメント
 
@@ -23,6 +25,7 @@ Pydantic AI モデルプロバイダーを提供します。
 
 user-guide
 custom-tools
+experimental-deps
 logging
 comparison-with-pydantic-ai
 ```
@@ -91,10 +94,15 @@ print(result.data)
 # → "600 JPY"
 ```
 
-**制限事項**:
-- Phase 1では依存性なしツール（`@agent.tool_plain`）のみサポート
-- `RunContext`を使用するツール（`@agent.tool`）は未サポート
-- 詳細は [カスタムツールの詳細](custom-tools-explained.md) を参照
+**機能レベル**:
+- **Phase 1**: 依存性なしツール（`@agent.tool_plain`）- 完全対応 ✅
+- **Milestone 3**: RunContext依存ツール（`@agent.tool`）- 実験的対応 ⚠️
+  - シリアライズ可能な依存性のみ（dict, Pydanticモデル, dataclass）
+  - 詳細は [実験的依存性サポート](experimental-deps.md) を参照
+
+**詳細ガイド**:
+- [カスタムツール](custom-tools.md) - Phase 1の完全ガイド
+- [実験的依存性サポート](experimental-deps.md) - Milestone 3の使い方
 
 ## リンク
 

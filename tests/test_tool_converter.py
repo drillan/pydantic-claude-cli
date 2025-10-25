@@ -31,7 +31,10 @@ class TestExtractPythonTypes:
 
     def test_extracts_complex_types(self) -> None:
         """複雑な型を抽出する"""
-        schema = {"type": "object", "properties": {"items": {"type": "array"}, "data": {"type": "object"}}}
+        schema = {
+            "type": "object",
+            "properties": {"items": {"type": "array"}, "data": {"type": "object"}},
+        }
 
         result = extract_python_types(schema)
         assert result == {"items": list, "data": dict}
@@ -156,7 +159,10 @@ class TestCreateMcpFromTools:
         tool_def = ToolDefinition(
             name="simple",
             description="Simple tool",
-            parameters_json_schema={"type": "object", "properties": {"x": {"type": "integer"}}},
+            parameters_json_schema={
+                "type": "object",
+                "properties": {"x": {"type": "integer"}},
+            },
         )
 
         server = create_mcp_from_tools([(tool_def, simple_tool)])
@@ -178,7 +184,9 @@ class TestCreateMcpFromTools:
 
         tool_defs = [
             ToolDefinition(name="add", description="Add", parameters_json_schema={}),
-            ToolDefinition(name="multiply", description="Multiply", parameters_json_schema={}),
+            ToolDefinition(
+                name="multiply", description="Multiply", parameters_json_schema={}
+            ),
         ]
 
         server = create_mcp_from_tools([(tool_defs[0], add), (tool_defs[1], multiply)])
@@ -204,7 +212,9 @@ class TestCreateMcpFromTools:
             """Sync tool"""
             return x * 2
 
-        tool_def = ToolDefinition(name="sync", description="Sync", parameters_json_schema={})
+        tool_def = ToolDefinition(
+            name="sync", description="Sync", parameters_json_schema={}
+        )
 
         # 同期関数でもMCPサーバーが作成できる
         server = create_mcp_from_tools([(tool_def, sync_tool)])
@@ -220,7 +230,9 @@ class TestCreateMcpFromTools:
             """Async tool"""
             return x * 2
 
-        tool_def = ToolDefinition(name="async", description="Async", parameters_json_schema={})
+        tool_def = ToolDefinition(
+            name="async", description="Async", parameters_json_schema={}
+        )
 
         # 非同期関数でもMCPサーバーが作成できる
         server = create_mcp_from_tools([(tool_def, async_tool)])

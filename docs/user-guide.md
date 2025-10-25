@@ -93,21 +93,66 @@ async def async_process(data: str) -> str:
     return data.upper()
 ```
 
-### 制限事項
+### RunContext依存ツールのサポート状況
 
-⚠️ **RunContext依存ツールは未サポート**:
+#### Phase 1: 依存性なしツールのみ
+
+**基本実装では、`@agent.tool_plain`のみサポート**:
+
 ```python
+# ✅ これは動作します（Phase 1）
+@agent.tool_plain
+def calculate(x: int, y: int) -> int:
+    return x + y
+
+# ❌ これは動作しません（Phase 1）
 from pydantic_ai.tools import RunContext
 
-# ❌ これは動作しません
 @agent.tool
 async def query_db(ctx: RunContext[DB], id: int) -> str:
-    return await ctx.deps.query(id)  # ctx.depsにアクセスできない
+    return await ctx.deps.query(id)
 ```
 
-**回避策**:
-- 依存性が必要な場合は、Pydantic AI標準（AnthropicModel）を使用
-- または、依存性を引数として明示的に渡す
+#### Milestone 3: 実験的依存性サポート
+
+**シリアライズ可能な依存性のみサポート（実験的機能）**:
+
+```python
+from pydantic_ai import RunContext
+from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
+
+# ✅ これは動作します（Milestone 3）
+model = ClaudeCodeCLIModel('...', enable_experimental_deps=True)
+agent = ClaudeCodeCLIAgent(model, deps_type=dict)
+model.set_agent_toolsets(agent._function_toolset)
+
+@agent.tool
+async def get_config(ctx: RunContext[dict], key: str) -> str:
+    return ctx.deps.get(key, "not found")
+
+result = await agent.run("Get API key", deps={"api_key": "abc"})
+```
+
+**詳細**: [実験的依存性サポート](experimental-deps.md)
+
+#### 完全なRunContextサポート
+
+**すべての機能が必要な場合**:
+
+```python
+from pydantic_ai import Agent
+from pydantic_ai.models.anthropic import AnthropicModel
+
+# Pydantic AI標準（API key必要）
+model = AnthropicModel('claude-sonnet-4-5-20250929', api_key='...')
+agent = Agent(model, deps_type=httpx.AsyncClient)
+
+@agent.tool
+async def fetch(ctx: RunContext[httpx.AsyncClient], url: str) -> str:
+    response = await ctx.deps.get(url)  # ✅ 完全サポート
+    ctx.retry("Retrying...")  # ✅ 完全サポート
+    return response.text
+```
 
 ---
 
@@ -199,4 +244,4 @@ result = await agent.run('...')
 
 - [動作の仕組み](how-it-works.md) - 内部動作の理解
 - [アーキテクチャ](architecture.md) - システム設計
-- [カスタムツール詳細](custom-tools-explained.md) - ツールの詳細説明
+- [カスタムツール](custom-tools.md) - ツールの詳細説明

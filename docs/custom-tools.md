@@ -107,24 +107,37 @@ result = await agent.run('(5 + 3) × 2 を計算して')
 
 ## 制限事項
 
-### RunContext依存ツールは未サポート
+### RunContext依存ツール
 
-**Phase 1では、依存性なしツール（`@agent.tool_plain`）のみサポートしています。**
+**Phase 1**: 依存性なしツール（`@agent.tool_plain`）のみサポート
+
+**Milestone 3**: 実験的依存性サポート（シリアライズ可能な依存性のみ）
 
 ```python
 from pydantic_ai.tools import RunContext
 
-# ❌ これは動作しません
+# ❌ Phase 1では動作しません
 @agent.tool
 async def get_user(ctx: RunContext[Database], user_id: int) -> str:
     # ctx.depsにアクセスできない
     return await ctx.deps.query_user(user_id)
+
+# ✅ Milestone 3では動作します（シリアライズ可能な依存性）
+@agent.tool
+async def get_config(ctx: RunContext[dict], key: str) -> str:
+    return ctx.deps.get(key, "not found")
 ```
 
 **回避策**:
-1. 依存性を引数として明示的に渡す
-2. グローバル変数を使用（推奨しない）
-3. Pydantic AI標準（AnthropicModel）を使用
+1. **実験的依存性サポートを使用**（Milestone 3）
+   - [実験的依存性サポート](experimental-deps.md)を参照
+   - シリアライズ可能な依存性（dict, Pydanticモデル等）のみサポート
+   - `ClaudeCodeCLIAgent` + `enable_experimental_deps=True`が必要
+
+2. **Pydantic AI標準を使用**（完全なサポート）
+   - AnthropicModelを使用（API key必要）
+
+3. **依存性を引数として明示的に渡す**
 
 ### set_agent_toolsetsの手動呼び出しが必要
 
@@ -174,6 +187,8 @@ model.set_agent_toolsets(agent._function_toolset)
 
 詳細なサンプルは`examples/`ディレクトリを参照：
 
+### Phase 1（依存性なし）
+
 - **`custom_tools_basic.py`** - 基本的な使い方
   - シンプルな計算ツール
   - 複数ツールの連携
@@ -183,6 +198,18 @@ model.set_agent_toolsets(agent._function_toolset)
   - Pydanticモデルを使ったツール
   - 非同期ツール
   - 複雑なデータ処理
+
+### Milestone 3（実験的依存性サポート）
+
+- **`experimental_deps_basic.py`** - 基本的な依存性の使い方
+  - dict型の依存性
+  - 設定値の取得
+  - 複数ツールでの依存性共有
+
+- **`experimental_deps_advanced.py`** - 高度な依存性の使い方
+  - Pydanticモデルの依存性
+  - dataclassの依存性
+  - 接続の再作成パターン
 
 すべてのサンプルは実際に動作確認済みです。
 
@@ -194,7 +221,6 @@ model.set_agent_toolsets(agent._function_toolset)
 
 - [動作の仕組み](how-it-works.md) - 内部動作の詳細
 - [アーキテクチャ](architecture.md) - システム設計
-- [内部ドキュメント](internal/README.md) - 開発者向け詳細
 
 ---
 
@@ -202,20 +228,34 @@ model.set_agent_toolsets(agent._function_toolset)
 
 ### Q: Pydantic AI標準との違いは？
 
-A: 主な違いは依存性注入（RunContext）のサポートです：
+A: カスタムツールの依存性サポートレベルが異なります：
 
-| 機能 | Pydantic AI標準 | pydantic-claude-cli |
-|------|----------------|---------------------|
-| 基本型ツール | ✅ | ✅ |
-| Pydanticモデル | ✅ | ✅ |
-| 非同期ツール | ✅ | ✅ |
-| RunContext依存 | ✅ | ❌（Phase 3で予定） |
-| APIキー | 必要 | 不要 |
+| 機能 | Pydantic AI標準 | Phase 1 | Milestone 3 (実験的) |
+|------|----------------|---------|---------------------|
+| 基本型ツール | ✅ | ✅ | ✅ |
+| Pydanticモデル | ✅ | ✅ | ✅ |
+| 非同期ツール | ✅ | ✅ | ✅ |
+| RunContext（シリアライズ可能deps） | ✅ | ❌ | ✅ |
+| RunContext（非シリアライズdeps） | ✅ | ❌ | ❌ |
+| `ctx.retry()`, `ctx.run_step` | ✅ | ❌ | ❌ |
+| APIキー | 必要 | 不要 | 不要 |
+
+詳細な比較: [Pydantic AI標準との比較](comparison-with-pydantic-ai.md)
 
 ### Q: なぜset_agent_toolsets()が必要？
 
 A: Pydantic AIの内部APIの制限により、Modelレイヤーでツール実行関数にアクセスするために必要です。将来のバージョンで自動化を検討しています。
 
-### Q: RunContext依存ツールはいつサポートされる？
+### Q: RunContext依存ツールはサポートされている？
 
-A: Phase 3で実験的サポートを予定していますが、技術的な制約があります。完全なサポートが必要な場合は、Pydantic AI標準（AnthropicModel）の使用を推奨します。
+A: **Milestone 3で実験的にサポートされています**（v0.2+）
+
+**サポート内容**:
+- ✅ **シリアライズ可能な依存性**: dict, Pydanticモデル, dataclass
+- ✅ **`ctx.deps`へのアクセス**: 依存性の値を取得可能
+- ❌ **非シリアライズ可能な依存性**: httpx, DB接続等は未サポート
+- ❌ **完全なRunContext**: `ctx.retry()`, `ctx.run_step`等は未サポート
+
+**使い方**: [実験的依存性サポート](experimental-deps.md)
+
+**完全なRunContextサポートが必要な場合**: Pydantic AI標準（AnthropicModel）の使用を推奨します。

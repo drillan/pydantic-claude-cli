@@ -73,7 +73,9 @@ class TestRequiresRunContext:
         """RunContextと他のパラメータが混在する関数を処理する"""
         from pydantic_ai.tools import RunContext
 
-        async def tool_mixed(ctx: RunContext[str], x: int, y: int, name: str = "default") -> str:
+        async def tool_mixed(
+            ctx: RunContext[str], x: int, y: int, name: str = "default"
+        ) -> str:
             return f"{ctx.deps}: {x + y}, {name}"
 
         assert requires_run_context(tool_mixed) is True
@@ -106,7 +108,9 @@ class TestFindToolFunction:
         def test_func(x: int) -> int:
             return x * 2
 
-        tool_def = ToolDefinition(name="test_func", description="test", parameters_json_schema={})
+        tool_def = ToolDefinition(
+            name="test_func", description="test", parameters_json_schema={}
+        )
 
         func = find_tool_function(tool_def, [agent._function_toolset])
 
@@ -121,7 +125,9 @@ class TestFindToolFunction:
 
         agent = Agent("test")
 
-        tool_def = ToolDefinition(name="nonexistent", description="test", parameters_json_schema={})
+        tool_def = ToolDefinition(
+            name="nonexistent", description="test", parameters_json_schema={}
+        )
 
         func = find_tool_function(tool_def, [agent._function_toolset])
 
@@ -132,7 +138,9 @@ class TestFindToolFunction:
         from pydantic_ai.tools import ToolDefinition
         from pydantic_claude_cli.tool_support import find_tool_function
 
-        tool_def = ToolDefinition(name="test", description="test", parameters_json_schema={})
+        tool_def = ToolDefinition(
+            name="test", description="test", parameters_json_schema={}
+        )
 
         func = find_tool_function(tool_def, [])
 
@@ -143,7 +151,9 @@ class TestFindToolFunction:
         from pydantic_ai.tools import ToolDefinition
         from pydantic_claude_cli.tool_support import find_tool_function
 
-        tool_def = ToolDefinition(name="test", description="test", parameters_json_schema={})
+        tool_def = ToolDefinition(
+            name="test", description="test", parameters_json_schema={}
+        )
 
         func = find_tool_function(tool_def, None)
 

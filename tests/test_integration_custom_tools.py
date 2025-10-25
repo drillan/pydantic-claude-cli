@@ -191,3 +191,177 @@ class TestToolExtractionEdgeCases:
 
         # LLMがエラーを受け取って何らかの応答を返す
         assert result.output is not None
+
+
+class TestExperimentalDepsSupport:
+    """実験的依存性サポートのテスト（Milestone 3）"""
+
+    @pytest.mark.asyncio
+    async def test_deps_with_dict(self) -> None:
+        """dict型の依存性が使える"""
+        from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
+
+        model = ClaudeCodeCLIModel(
+            "claude-sonnet-4-5-20250929", enable_experimental_deps=True
+        )
+        agent = ClaudeCodeCLIAgent(model, deps_type=dict)
+        model.set_agent_toolsets(agent._function_toolset)
+
+        call_count = 0
+
+        @agent.tool
+        async def get_api_key(ctx: RunContext[dict]) -> str:
+            """Get API key from deps"""
+            nonlocal call_count
+            call_count += 1
+            return ctx.deps.get("api_key", "not_found")
+
+        result = await agent.run(
+            "What is the API key? Use get_api_key tool.",
+            deps={"api_key": "secret123"},
+        )
+
+        # 結果が返されることを確認
+        assert result.output is not None
+        # ツールが呼び出されたか、または結果が含まれることを確認
+        assert "secret123" in result.output or call_count > 0
+
+    @pytest.mark.asyncio
+    async def test_deps_with_pydantic_model(self) -> None:
+        """Pydanticモデルの依存性が使える"""
+        from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
+
+        class Config(BaseModel):
+            api_key: str
+            timeout: int
+
+        model = ClaudeCodeCLIModel(
+            "claude-sonnet-4-5-20250929", enable_experimental_deps=True
+        )
+        agent = ClaudeCodeCLIAgent(model, deps_type=Config)
+        model.set_agent_toolsets(agent._function_toolset)
+
+        @agent.tool
+        async def get_config_value(ctx: RunContext[Config], key: str) -> str:
+            """Get config value"""
+            if key == "api_key":
+                return ctx.deps.api_key
+            elif key == "timeout":
+                return str(ctx.deps.timeout)
+            return "unknown"
+
+        result = await agent.run(
+            "Get the timeout value using get_config_value tool",
+            deps=Config(api_key="test", timeout=30),
+        )
+
+        # 結果が返されることを確認
+        assert result.output is not None
+
+    @pytest.mark.asyncio
+    async def test_deps_with_dataclass(self) -> None:
+        """dataclassの依存性が使える"""
+        from dataclasses import dataclass
+
+        from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
+
+        @dataclass
+        class AppConfig:
+            db_url: str
+            max_connections: int
+
+        model = ClaudeCodeCLIModel(
+            "claude-sonnet-4-5-20250929", enable_experimental_deps=True
+        )
+        agent = ClaudeCodeCLIAgent(model, deps_type=AppConfig)
+        model.set_agent_toolsets(agent._function_toolset)
+
+        @agent.tool
+        async def get_db_url(ctx: RunContext[AppConfig]) -> str:
+            """Get database URL"""
+            return ctx.deps.db_url
+
+        result = await agent.run(
+            "Get the database URL using get_db_url tool",
+            deps=AppConfig(db_url="postgresql://localhost/test", max_connections=10),
+        )
+
+        # 結果が返されることを確認
+        assert result.output is not None
+
+    @pytest.mark.asyncio
+    async def test_non_serializable_deps_error(self) -> None:
+        """非シリアライズ可能な依存性でエラー"""
+        # このテストはスキップ（httpx.AsyncClientが必要）
+        # 実際の環境ではテストできないため、ユニットテストでカバー
+        pytest.skip("Requires httpx.AsyncClient, covered by unit tests")
+
+    @pytest.mark.asyncio
+    async def test_experimental_deps_disabled_by_default(self) -> None:
+        """実験的機能がデフォルトで無効"""
+        from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
+
+        # enable_experimental_deps=False（デフォルト）
+        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+        agent = ClaudeCodeCLIAgent(model, deps_type=dict)
+        model.set_agent_toolsets(agent._function_toolset)
+
+        @agent.tool
+        async def deps_tool(ctx: RunContext[dict]) -> str:
+            return "test"
+
+        # RunContext依存ツールは引き続きエラー
+        with pytest.raises(MessageConversionError, match="RunContext.*not supported"):
+            await agent.run("Test", deps={"key": "value"})
+
+    @pytest.mark.asyncio
+    async def test_context_var_cleanup_on_success(self) -> None:
+        """実行成功後にContextVarがクリーンアップされる"""
+        from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
+        from pydantic_claude_cli.deps_context import get_current_deps
+
+        model = ClaudeCodeCLIModel(
+            "claude-sonnet-4-5-20250929", enable_experimental_deps=True
+        )
+        agent = ClaudeCodeCLIAgent(model, deps_type=dict)
+        model.set_agent_toolsets(agent._function_toolset)
+
+        @agent.tool
+        async def simple_tool(ctx: RunContext[dict]) -> str:
+            return "test"
+
+        # 実行前はNone
+        assert get_current_deps() is None
+
+        # 実行
+        result = await agent.run("Test", deps={"key": "value"})
+
+        # 実行後もNone（クリーンアップされている）
+        assert get_current_deps() is None
+        assert result.output is not None
+
+    @pytest.mark.asyncio
+    async def test_context_var_cleanup_on_error(self) -> None:
+        """エラー時にもContextVarがクリーンアップされる"""
+        from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
+        from pydantic_claude_cli.deps_context import get_current_deps
+
+        model = ClaudeCodeCLIModel(
+            "claude-sonnet-4-5-20250929", enable_experimental_deps=True
+        )
+        agent = ClaudeCodeCLIAgent(model, deps_type=dict)
+        model.set_agent_toolsets(agent._function_toolset)
+
+        @agent.tool
+        async def failing_tool(ctx: RunContext[dict]) -> str:
+            raise ValueError("test error")
+
+        # 実行前はNone
+        assert get_current_deps() is None
+
+        # 実行（ツールがエラーを起こすが、Agentは続行）
+        result = await agent.run("Use failing_tool", deps={"key": "value"})
+
+        # 実行後もNone（エラーでもクリーンアップされている）
+        assert get_current_deps() is None
+        assert result.output is not None
