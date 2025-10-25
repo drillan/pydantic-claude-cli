@@ -9,7 +9,7 @@
 │  from pydantic_ai import Agent                                │
 │  from pydantic_claude_cli import ClaudeCodeCLIModel           │
 │                                                                │
-│  model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')     │
+│  model = ClaudeCodeCLIModel('claude-haiku-4-5')     │
 │  agent = Agent(model)                                          │
 │  result = await agent.run('Hello')                            │
 └────────────────────────┬────────────────────────────────────┘
@@ -295,7 +295,7 @@ ClaudeCodeCLIModel.request()
     ├─▶ ClaudeCodeOptions 作成
     │       │
     │       └─▶ options = {
-    │               model: "claude-sonnet-4-5-20250929",
+    │               model: "claude-haiku-4-5",
     │               system_prompt: "...",
     │               max_turns: None,
     │               permission_mode: None,
@@ -312,7 +312,7 @@ Claude Code SDK
     ├─▶ CLI コマンド構築
     │       │
     │       └─▶ ["claude", "--output-format", "stream-json",
-    │            "--model", "claude-sonnet-4-5-20250929",
+    │            "--model", "claude-haiku-4-5",
     │            "--input-format", "stream-json"]
     │
     ├─▶ サブプロセス起動

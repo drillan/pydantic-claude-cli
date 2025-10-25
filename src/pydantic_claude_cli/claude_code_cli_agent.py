@@ -13,7 +13,7 @@ Example:
     from pydantic_ai import RunContext
     from pydantic_claude_cli import ClaudeCodeCLIModel, ClaudeCodeCLIAgent
 
-    model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+    model = ClaudeCodeCLIModel('claude-haiku-4-5')
     agent = ClaudeCodeCLIAgent(model, deps_type=dict)
     model.set_agent_toolsets(agent._function_toolset)
 
@@ -52,7 +52,7 @@ class ClaudeCodeCLIAgent(Agent[AgentDepsT]):  # type: ignore[misc]
 
     Example:
         >>> from pydantic_claude_cli import ClaudeCodeCLIModel, ClaudeCodeCLIAgent
-        >>> model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+        >>> model = ClaudeCodeCLIModel('claude-haiku-4-5')
         >>> agent = ClaudeCodeCLIAgent(model, deps_type=dict)
         >>> model.set_agent_toolsets(agent._function_toolset)
         >>> # ツールを定義

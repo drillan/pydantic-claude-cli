@@ -20,7 +20,7 @@ def benchmark_tool_extraction() -> dict[str, Any]:
     from pydantic_ai.tools import ToolDefinition
     from pydantic_claude_cli.tool_support import find_tool_function
 
-    model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+    model = ClaudeCodeCLIModel("claude-haiku-4-5")
     agent = Agent(model)
     model.set_agent_toolsets(agent._function_toolset)
 
@@ -125,7 +125,7 @@ def benchmark_mcp_server_creation() -> dict[str, Any]:
 
 def benchmark_memory_usage() -> dict[str, Any]:
     """メモリ使用量を測定"""
-    model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+    model = ClaudeCodeCLIModel("claude-haiku-4-5")
     agent = Agent(model)
     model.set_agent_toolsets(agent._function_toolset)
 
@@ -156,7 +156,7 @@ def benchmark_memory_usage() -> dict[str, Any]:
 
 async def benchmark_end_to_end() -> dict[str, Any]:
     """E2Eパフォーマンスを測定"""
-    model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+    model = ClaudeCodeCLIModel("claude-haiku-4-5")
     agent = Agent(model)
     model.set_agent_toolsets(agent._function_toolset)
 

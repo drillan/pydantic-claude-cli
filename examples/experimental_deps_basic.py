@@ -27,7 +27,7 @@ async def main() -> None:
     # ステップ1: モデルを作成（実験的機能を有効化）
     print("【ステップ1】モデル作成")
     model = ClaudeCodeCLIModel(
-        "claude-sonnet-4-5-20250929",
+        "claude-haiku-4-5",
         enable_experimental_deps=True,  # 実験的機能
     )
     print("  ✅ ClaudeCodeCLIModel作成完了（enable_experimental_deps=True）")

@@ -55,7 +55,7 @@ async def main() -> None:
     print()
 
     # モデルとAgent
-    model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+    model = ClaudeCodeCLIModel("claude-haiku-4-5")
     agent = Agent(
         model, instructions="ツールを使って計算してください。日本語で回答してください。"
     )
@@ -189,7 +189,7 @@ async def main() -> None:
     print()
     print("🔍 属性：")
     print("  - gen_ai.system: claude-code-cli")
-    print("  - gen_ai.model: claude-sonnet-4-5-20250929")
+    print("  - gen_ai.model: claude-haiku-4-5")
     print("  - gen_ai.tool.name: calculate_subtotal, apply_discount, etc.")
     print("  - gen_ai.tool.call.arguments: {...}")
     print("  - gen_ai.tool.call.result: {...}")

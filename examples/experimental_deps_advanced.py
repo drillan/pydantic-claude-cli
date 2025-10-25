@@ -52,9 +52,7 @@ async def main() -> None:
     print("【例1】Pydanticモデルの依存性")
     print()
 
-    model1 = ClaudeCodeCLIModel(
-        "claude-sonnet-4-5-20250929", enable_experimental_deps=True
-    )
+    model1 = ClaudeCodeCLIModel("claude-haiku-4-5", enable_experimental_deps=True)
     agent1 = ClaudeCodeCLIAgent(
         model1,
         deps_type=ApiConfig,
@@ -118,9 +116,7 @@ async def main() -> None:
     print("【例2】dataclassの依存性")
     print()
 
-    model2 = ClaudeCodeCLIModel(
-        "claude-sonnet-4-5-20250929", enable_experimental_deps=True
-    )
+    model2 = ClaudeCodeCLIModel("claude-haiku-4-5", enable_experimental_deps=True)
     agent2 = ClaudeCodeCLIAgent(
         model2,
         deps_type=DatabaseConfig,
@@ -212,9 +208,7 @@ async def main() -> None:
         auth: AuthConfig
         debug: bool = False
 
-    model3 = ClaudeCodeCLIModel(
-        "claude-sonnet-4-5-20250929", enable_experimental_deps=True
-    )
+    model3 = ClaudeCodeCLIModel("claude-haiku-4-5", enable_experimental_deps=True)
     agent3 = ClaudeCodeCLIAgent(
         model3,
         deps_type=ServiceConfig,

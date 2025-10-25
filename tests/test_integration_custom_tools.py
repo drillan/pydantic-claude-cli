@@ -18,7 +18,7 @@ class TestCustomToolsIntegration:
     @pytest.mark.asyncio
     async def test_simple_tool_execution(self) -> None:
         """シンプルなツールが実行される"""
-        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+        model = ClaudeCodeCLIModel("claude-haiku-4-5")
         agent = Agent(model)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -40,7 +40,7 @@ class TestCustomToolsIntegration:
     @pytest.mark.asyncio
     async def test_multiple_tools_collaboration(self) -> None:
         """複数ツールの連携が動作する"""
-        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+        model = ClaudeCodeCLIModel("claude-haiku-4-5")
         agent = Agent(model)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -65,7 +65,7 @@ class TestCustomToolsIntegration:
             name: str
             price: float
 
-        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+        model = ClaudeCodeCLIModel("claude-haiku-4-5")
         agent = Agent(model)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -84,7 +84,7 @@ class TestCustomToolsIntegration:
     @pytest.mark.asyncio
     async def test_async_tool(self) -> None:
         """非同期ツールが動作する"""
-        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+        model = ClaudeCodeCLIModel("claude-haiku-4-5")
         agent = Agent(model)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -104,7 +104,7 @@ class TestCustomToolsIntegration:
     @pytest.mark.asyncio
     async def test_runcontext_tool_error(self) -> None:
         """RunContext依存ツールでエラーが発生する"""
-        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+        model = ClaudeCodeCLIModel("claude-haiku-4-5")
         agent = Agent(model, deps_type=dict)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -124,7 +124,7 @@ class TestCustomToolsIntegration:
     @pytest.mark.asyncio
     async def test_without_set_agent_toolsets(self) -> None:
         """set_agent_toolsets()を呼び出さない場合、ツールが見つからない"""
-        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+        model = ClaudeCodeCLIModel("claude-haiku-4-5")
         agent = Agent(model)
 
         # set_agent_toolsets()を呼び出さない
@@ -143,7 +143,7 @@ class TestCustomToolsIntegration:
     @pytest.mark.asyncio
     async def test_tool_with_default_arguments(self) -> None:
         """デフォルト引数を持つツールが動作する"""
-        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+        model = ClaudeCodeCLIModel("claude-haiku-4-5")
         agent = Agent(model)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -164,7 +164,7 @@ class TestToolExtractionEdgeCases:
     @pytest.mark.asyncio
     async def test_empty_toolset(self) -> None:
         """ツールが定義されていない場合"""
-        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+        model = ClaudeCodeCLIModel("claude-haiku-4-5")
         agent = Agent(model)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -176,7 +176,7 @@ class TestToolExtractionEdgeCases:
     @pytest.mark.asyncio
     async def test_tool_execution_error_handling(self) -> None:
         """ツール実行時のエラーハンドリング"""
-        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+        model = ClaudeCodeCLIModel("claude-haiku-4-5")
         agent = Agent(model)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -201,9 +201,7 @@ class TestExperimentalDepsSupport:
         """dict型の依存性が使える"""
         from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
 
-        model = ClaudeCodeCLIModel(
-            "claude-sonnet-4-5-20250929", enable_experimental_deps=True
-        )
+        model = ClaudeCodeCLIModel("claude-haiku-4-5", enable_experimental_deps=True)
         agent = ClaudeCodeCLIAgent(model, deps_type=dict)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -235,9 +233,7 @@ class TestExperimentalDepsSupport:
             api_key: str
             timeout: int
 
-        model = ClaudeCodeCLIModel(
-            "claude-sonnet-4-5-20250929", enable_experimental_deps=True
-        )
+        model = ClaudeCodeCLIModel("claude-haiku-4-5", enable_experimental_deps=True)
         agent = ClaudeCodeCLIAgent(model, deps_type=Config)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -270,9 +266,7 @@ class TestExperimentalDepsSupport:
             db_url: str
             max_connections: int
 
-        model = ClaudeCodeCLIModel(
-            "claude-sonnet-4-5-20250929", enable_experimental_deps=True
-        )
+        model = ClaudeCodeCLIModel("claude-haiku-4-5", enable_experimental_deps=True)
         agent = ClaudeCodeCLIAgent(model, deps_type=AppConfig)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -302,7 +296,7 @@ class TestExperimentalDepsSupport:
         from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
 
         # enable_experimental_deps=False（デフォルト）
-        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+        model = ClaudeCodeCLIModel("claude-haiku-4-5")
         agent = ClaudeCodeCLIAgent(model, deps_type=dict)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -320,9 +314,7 @@ class TestExperimentalDepsSupport:
         from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
         from pydantic_claude_cli.deps_context import get_current_deps
 
-        model = ClaudeCodeCLIModel(
-            "claude-sonnet-4-5-20250929", enable_experimental_deps=True
-        )
+        model = ClaudeCodeCLIModel("claude-haiku-4-5", enable_experimental_deps=True)
         agent = ClaudeCodeCLIAgent(model, deps_type=dict)
         model.set_agent_toolsets(agent._function_toolset)
 
@@ -346,9 +338,7 @@ class TestExperimentalDepsSupport:
         from pydantic_claude_cli import ClaudeCodeCLIAgent, ClaudeCodeCLIModel
         from pydantic_claude_cli.deps_context import get_current_deps
 
-        model = ClaudeCodeCLIModel(
-            "claude-sonnet-4-5-20250929", enable_experimental_deps=True
-        )
+        model = ClaudeCodeCLIModel("claude-haiku-4-5", enable_experimental_deps=True)
         agent = ClaudeCodeCLIAgent(model, deps_type=dict)
         model.set_agent_toolsets(agent._function_toolset)
 

@@ -24,7 +24,7 @@ async def main() -> None:
     print()
 
     # モデルを作成
-    model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+    model = ClaudeCodeCLIModel("claude-haiku-4-5")
     agent = Agent(model, instructions="ツールを使って計算してください。")
 
     # 重要: Agent作成後にtoolsetsを設定

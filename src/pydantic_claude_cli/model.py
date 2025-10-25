@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
-from claude_code_sdk import ClaudeSDKClient, query as claude_query
+from claude_code_sdk import ClaudeSDKClient
 from claude_code_sdk.types import (
     AssistantMessage,
     ClaudeCodeOptions,
@@ -405,27 +405,18 @@ class ClaudeCodeCLIModel(Model):
         try:
             response_messages: list[Message] = []
 
-            if mcp_server is not None:
-                # ClaudeSDKClientを使用（MCPツール対応）
-                logger.debug("Using ClaudeSDKClient for MCP tools support")
-                async with ClaudeSDKClient(options=options) as client:
-                    await client.query(prompt)
-                    async for message in client.receive_response():
-                        response_messages.append(message)
-                logger.debug(
-                    "Received %d messages from ClaudeSDKClient", len(response_messages)
-                )
-            else:
-                # query()を使用（通常動作）
-                logger.debug("Using query() for standard request")
-                async for message in claude_query(prompt=prompt, options=options):
+            # ClaudeSDKClientを常に使用
+            # NOTE: query()関数はallowed_toolsを正しく処理しない既知の問題がある
+            logger.debug(
+                "Using ClaudeSDKClient (always, for proper allowed_tools support)"
+            )
+            async with ClaudeSDKClient(options=options) as client:
+                await client.query(prompt)
+                async for message in client.receive_response():
                     response_messages.append(message)
-
-                    # ResultMessage is the last message, but continue to consume
-                    # the generator to avoid cleanup errors
-                    if isinstance(message, ResultMessage):
-                        # Don't break, let the generator finish naturally
-                        pass
+            logger.debug(
+                "Received %d messages from ClaudeSDKClient", len(response_messages)
+            )
 
             # Find the assistant message(s) in the response
             assistant_messages: list[AssistantMessage] = []

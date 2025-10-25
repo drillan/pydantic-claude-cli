@@ -22,12 +22,16 @@ async def main() -> None:
     print()
 
     # ToolPreset.WEB_ENABLEDでWebSearch + WebFetchを有効化
+    # Note: Sonnetモデルを推奨（Haikuはツール使用判断が弱い）
     model = ClaudeCodeCLIModel(
-        "claude-sonnet-4-5-20250929", tool_preset=ToolPreset.WEB_ENABLED
+        "claude-sonnet-4-5-20250929",
+        tool_preset=ToolPreset.WEB_ENABLED,
+        permission_mode="acceptEdits",  # ツール使用を自動承認
     )
 
     agent = Agent(
-        model, instructions="ユーザーの質問に答えてください。必要に応じてWeb検索を使用してください。"
+        model,
+        instructions="Web検索ツールを使って最新情報を取得してください。知識カットオフ以降の情報が必要な場合は必ずWebSearchを使用してください。",
     )
 
     print("質問: 2025年10月25日時点で、日本の内閣総理大臣を教えてください")

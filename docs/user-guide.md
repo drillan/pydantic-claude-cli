@@ -26,7 +26,7 @@ from pydantic_claude_cli import ClaudeCodeCLIModel
 
 async def main():
     # モデルを作成
-    model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+    model = ClaudeCodeCLIModel('claude-haiku-4-5')
 
     # Agentを作成
     agent = Agent(model, instructions='簡潔に答えてください。')
@@ -49,7 +49,7 @@ from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
 # ステップ1: モデルとAgentを作成
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 
 # ステップ2: toolsetsを設定（重要！）
@@ -144,7 +144,7 @@ from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 
 # Pydantic AI標準（API key必要）
-model = AnthropicModel('claude-sonnet-4-5-20250929', api_key='...')
+model = AnthropicModel('claude-haiku-4-5', api_key='...')
 agent = Agent(model, deps_type=httpx.AsyncClient)
 
 @agent.tool
@@ -164,7 +164,7 @@ async def fetch(ctx: RunContext[httpx.AsyncClient], url: str) -> str:
 from pydantic_claude_cli import ClaudeCLINotFoundError
 
 try:
-    model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+    model = ClaudeCodeCLIModel('claude-haiku-4-5')
     agent = Agent(model)
     result = await agent.run('Hello')
 except ClaudeCLINotFoundError:

@@ -17,7 +17,7 @@ class BuiltinTools:
     Example:
         >>> from pydantic_claude_cli import ClaudeCodeCLIModel, BuiltinTools
         >>> model = ClaudeCodeCLIModel(
-        ...     "claude-sonnet-4-5-20250929",
+        ...     "claude-haiku-4-5",
         ...     allowed_tools=BuiltinTools.WEB_TOOLS
         ... )
     """
@@ -89,7 +89,7 @@ class ToolPreset(str, Enum):
     Example:
         >>> from pydantic_claude_cli import ClaudeCodeCLIModel, ToolPreset
         >>> model = ClaudeCodeCLIModel(
-        ...     "claude-sonnet-4-5-20250929",
+        ...     "claude-haiku-4-5",
         ...     tool_preset=ToolPreset.WEB_ENABLED
         ... )
     """

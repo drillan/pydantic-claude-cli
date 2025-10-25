@@ -46,7 +46,7 @@ class Config(BaseModel):
     timeout: int
 
 model = ClaudeCodeCLIModel(
-    'claude-sonnet-4-5-20250929',
+    'claude-haiku-4-5',
     enable_experimental_deps=True  # 実験的機能を有効化
 )
 agent = ClaudeCodeCLIAgent(model, deps_type=Config)
@@ -94,7 +94,7 @@ from pydantic_claude_cli import ClaudeCodeCLIModel, ClaudeCodeCLIAgent
 
 # ステップ1: モデル作成（実験的機能を有効化）
 model = ClaudeCodeCLIModel(
-    'claude-sonnet-4-5-20250929',
+    'claude-haiku-4-5',
     enable_experimental_deps=True
 )
 
@@ -413,7 +413,7 @@ A: ContextVarに依存性を設定するため、カスタムAgentラッパー�
 from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 model.set_agent_toolsets(agent._function_toolset)
 
@@ -428,7 +428,7 @@ from pydantic_ai import RunContext
 from pydantic_claude_cli import ClaudeCodeCLIModel, ClaudeCodeCLIAgent
 
 model = ClaudeCodeCLIModel(
-    'claude-sonnet-4-5-20250929',
+    'claude-haiku-4-5',
     enable_experimental_deps=True  # 追加
 )
 agent = ClaudeCodeCLIAgent(model, deps_type=dict)  # 変更
@@ -451,7 +451,7 @@ RunContextのすべての機能が必要な場合は、Pydantic AI標準の使�
 from pydantic_ai import Agent
 from pydantic_ai.models.anthropic import AnthropicModel
 
-model = AnthropicModel('claude-sonnet-4-5-20250929', api_key='...')
+model = AnthropicModel('claude-haiku-4-5', api_key='...')
 agent = Agent(model, deps_type=httpx.AsyncClient)
 
 @agent.tool

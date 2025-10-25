@@ -28,7 +28,7 @@ async def example_cli_not_found():
     try:
         # 存在しないCLIパスでモデルを作成しようとする
         model = ClaudeCodeCLIModel(
-            "claude-sonnet-4-5-20250929", cli_path="/non/existent/path/to/claude"
+            "claude-haiku-4-5", cli_path="/non/existent/path/to/claude"
         )
         agent = Agent(model)
         await agent.run("こんにちは")
@@ -44,7 +44,7 @@ async def example_basic_request():
     print("=" * 60)
 
     try:
-        model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+        model = ClaudeCodeCLIModel("claude-haiku-4-5")
         agent = Agent(model, instructions="非常に簡潔に答えてください。")
 
         result = await agent.run("2+2は？数字だけ答えてください。")

@@ -56,7 +56,7 @@ async def main() -> None:
 
     # モデルとAgentを作成
     print("ステップ3: モデルとAgentを作成")
-    model = ClaudeCodeCLIModel("claude-sonnet-4-5-20250929")
+    model = ClaudeCodeCLIModel("claude-haiku-4-5")
     agent = Agent(model, instructions="簡潔に答えてください。")
     print("  ✓ ClaudeCodeCLIModel + Agent作成完了")
     print()

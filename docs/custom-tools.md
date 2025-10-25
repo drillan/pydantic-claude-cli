@@ -18,7 +18,7 @@ from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
 # ステップ1: モデルとAgentを作成
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 
 # ステップ2: toolsetsを設定（重要！）

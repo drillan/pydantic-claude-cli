@@ -53,7 +53,7 @@ from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
 # モデルを作成
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 
 # エージェントを作成
 agent = Agent(model, system_prompt='あなたは親切なアシスタントです。')
@@ -71,7 +71,7 @@ print(result.data)
 from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 
 # 重要: toolsetsを設定（必須）

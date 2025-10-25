@@ -68,7 +68,7 @@ custom-tools-explained
 from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 ` ``
 ```
@@ -233,7 +233,7 @@ from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
 # モデルを作成
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 
 # エージェントを作成
 agent = Agent(model, system_prompt='あなたは親切なアシスタントです。')
@@ -338,7 +338,7 @@ classDiagram
 ```python
 from pydantic_ai import Agent, tool
 
-agent = Agent('claude-sonnet-4-5-20250929')
+agent = Agent('claude-haiku-4-5')
 
 @agent.tool
 def calculate_sum(a: int, b: int) -> int:
@@ -397,7 +397,7 @@ ClaudeCodeCLIModel は、Claude Code CLI を介してアクセスします。
 
 ```python
 # モデルを作成
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 
 # エージェントを作成
 agent = Agent(model, system_prompt='あなたは親切なアシスタントです。')

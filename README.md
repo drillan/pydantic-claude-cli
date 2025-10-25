@@ -51,7 +51,7 @@ from pydantic_claude_cli import ClaudeCodeCLIModel
 
 async def main():
     # モデルインスタンス作成 - APIキー不要
-    model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+    model = ClaudeCodeCLIModel('claude-haiku-4-5')
 
     # Pydantic AI Agentで使用
     agent = Agent(
@@ -75,7 +75,7 @@ if __name__ == '__main__':
 from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model, instructions='簡潔で親切に答えてください。')
 
 result = await agent.run('量子コンピューティングを一文で説明してください。')
@@ -88,7 +88,7 @@ print(result.output)
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
 model = ClaudeCodeCLIModel(
-    'claude-sonnet-4-5-20250929',
+    'claude-haiku-4-5',
     max_turns=10,  # 会話ターン数を制限
     permission_mode='acceptEdits',  # 編集を自動承認
     cli_path='/custom/path/to/claude',  # カスタムCLIパス
@@ -103,7 +103,7 @@ model = ClaudeCodeCLIModel(
 from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 
 # 重要: Agent作成後にtoolsetsを設定
@@ -162,7 +162,7 @@ from pydantic_claude_cli import ClaudeCodeCLIModel, ToolPreset
 
 # Web検索を有効化
 model = ClaudeCodeCLIModel(
-    'claude-sonnet-4-5-20250929',
+    'claude-haiku-4-5',
     tool_preset=ToolPreset.WEB_ENABLED
 )
 agent = Agent(model)
@@ -183,7 +183,7 @@ result = await agent.run('2025年10月25日時点で、日本の内閣総理大�
 from pydantic_claude_cli import ClaudeCodeCLIModel, BuiltinTools
 
 model = ClaudeCodeCLIModel(
-    'claude-sonnet-4-5-20250929',
+    'claude-haiku-4-5',
     allowed_tools=BuiltinTools.WEB_TOOLS  # ["WebSearch", "WebFetch"]
 )
 ```
@@ -199,7 +199,7 @@ model = ClaudeCodeCLIModel(
 
 ```python
 model = ClaudeCodeCLIModel(
-    'claude-sonnet-4-5-20250929',
+    'claude-haiku-4-5',
     allowed_tools=["WebSearch", "WebFetch", "Read"]
 )
 ```
@@ -208,7 +208,7 @@ model = ClaudeCodeCLIModel(
 
 ```python
 model = ClaudeCodeCLIModel(
-    'claude-sonnet-4-5-20250929',
+    'claude-haiku-4-5',
     tool_preset=ToolPreset.WEB_ENABLED  # ベース設定
 )
 agent = Agent(model)
@@ -232,7 +232,7 @@ from pydantic_claude_cli import (
 )
 
 try:
-    model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+    model = ClaudeCodeCLIModel('claude-haiku-4-5')
     agent = Agent(model)
     result = await agent.run('こんにちは')
 except ClaudeCLINotFoundError:
@@ -249,7 +249,7 @@ Claude Code CLIがサポートするすべてのClaudeモデルを使用でき�
 
 ### 推奨モデル
 
-- **`claude-sonnet-4-5-20250929`** （Claude Sonnet 4.5）- 推奨
+- **`claude-haiku-4-5`** （Claude Sonnet 4.5）- 推奨
   - 高度な推論と分析能力を備えた改善されたパフォーマンス
   - 入力: $3.0/百万トークン、出力: $15.0/百万トークン
 
@@ -309,7 +309,7 @@ CLIに権限が必要な場合があります。`permission_mode='acceptEdits'`�
 
 ```python
 model = ClaudeCodeCLIModel(
-    'claude-sonnet-4-5-20250929',
+    'claude-haiku-4-5',
     permission_mode='acceptEdits'
 )
 ```

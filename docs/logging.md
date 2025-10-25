@@ -37,7 +37,7 @@ logging.basicConfig(
 from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 
 # ログが出力される
@@ -54,7 +54,7 @@ import logging
 # DEBUGレベルで詳細ログ
 logging.basicConfig(level=logging.DEBUG)
 
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 model.set_agent_toolsets(agent._function_toolset)
 
@@ -111,7 +111,7 @@ logfire.configure()
 logfire.instrument_pydantic_ai()
 
 # Agentを作成
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 
 # カスタムツール
@@ -162,7 +162,7 @@ set_tracer_provider(tracer_provider)
 Agent.instrument_all()
 
 # 使用
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 
 result = await agent.run('Hello')
@@ -344,7 +344,7 @@ logging.basicConfig(
 class Config(BaseModel):
     api_key: str
 
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929', enable_experimental_deps=True)
+model = ClaudeCodeCLIModel('claude-haiku-4-5', enable_experimental_deps=True)
 agent = ClaudeCodeCLIAgent(model, deps_type=Config)
 model.set_agent_toolsets(agent._function_toolset)
 

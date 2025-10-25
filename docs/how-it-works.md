@@ -314,7 +314,7 @@ ModelResponse(
         TextPart(content="こんにちは！"),
     ],
     usage=RequestUsage(...),
-    model_name="claude-sonnet-4-5-20250929",
+    model_name="claude-haiku-4-5",
 )
 ```
 
@@ -326,7 +326,7 @@ AssistantMessage(
     content=[
         TextBlock(text="こんにちは！"),
     ],
-    model="claude-sonnet-4-5-20250929",
+    model="claude-haiku-4-5",
 )
 
 # ResultMessage
@@ -619,7 +619,7 @@ API:    500-5000ms (モデルによる)
 from pydantic_ai import Agent
 from pydantic_claude_cli import ClaudeCodeCLIModel
 
-model = ClaudeCodeCLIModel('claude-sonnet-4-5-20250929')
+model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model)
 
 @agent.tool_plain
@@ -682,7 +682,7 @@ server = create_sdk_mcp_server(
 ```python
 # ClaudeCodeOptionsに設定
 options = ClaudeCodeOptions(
-    model="claude-sonnet-4-5-20250929",
+    model="claude-haiku-4-5",
     mcp_servers={"custom": server}
 )
 
@@ -800,7 +800,7 @@ claude login
 **解決方法**:
 ```python
 model = ClaudeCodeCLIModel(
-    'claude-sonnet-4-5-20250929',
+    'claude-haiku-4-5',
     permission_mode='acceptEdits'
 )
 ```
