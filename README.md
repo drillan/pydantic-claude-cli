@@ -208,7 +208,7 @@ model = ClaudeCodeCLIModel(
 
 ```python
 model = ClaudeCodeCLIModel(
-    'claude-haiku-4-5',
+    'claude-sonnet-4-5-20250929',
     tool_preset=ToolPreset.WEB_ENABLED  # ベース設定
 )
 agent = Agent(model)
@@ -219,6 +219,30 @@ def calculate(x: int, y: int) -> int:
     return x + y
 
 # カスタムツール + WebSearchの両方が使える
+```
+
+#### 重要な注意事項
+
+**ツール使用はモデルの判断に依存**:
+- `allowed_tools`はツールの「許可」であり、「強制」ではありません
+- モデルが自律的に「使う/使わない」を判断します
+- より確実にツールを使わせるには：
+  - **Sonnetモデルを推奨**（Haikuはツール判断が弱い）
+  - **明示的な指示**：instructions や質問に「必ずWebSearchを使用」と記載
+  - **permission_mode="acceptEdits"**：ツール使用を自動承認
+
+例：
+```python
+model = ClaudeCodeCLIModel(
+    'claude-sonnet-4-5-20250929',  # Sonnet推奨
+    tool_preset=ToolPreset.WEB_ENABLED,
+    permission_mode='acceptEdits'  # 自動承認
+)
+agent = Agent(
+    model,
+    instructions='必要に応じてWebSearchツールを使用してください'  # 明示的指示
+)
+result = await agent.run('質問内容。必ずWebSearchを使用してください')  # 明示的要求
 ```
 
 ### エラーハンドリング

@@ -37,7 +37,10 @@ async def main() -> None:
     print("質問: 2025年10月25日時点で、日本の内閣総理大臣を教えてください")
     print()
 
-    result = await agent.run("2025年10月25日時点で、日本の内閣総理大臣を教えてください")
+    result = await agent.run(
+        "2025年10月25日時点で、日本の内閣総理大臣を教えてください。"
+        "必ずWebSearchツールを使用して最新情報を取得してください。"
+    )
 
     print("回答:")
     print(result.output)
