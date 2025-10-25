@@ -43,7 +43,7 @@ language = "ja"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = "sphinx_rtd_theme"
-html_static_path = []  # _staticディレクトリがない場合のエラーを回避
+html_static_path: list[str] = []  # _staticディレクトリがない場合のエラーを回避
 
 # Read the Docs テーマのオプション
 html_theme_options = {

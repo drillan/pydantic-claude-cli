@@ -110,7 +110,7 @@ async def main() -> None:
     print()
 
     # 依存性を定義
-    app_deps = {
+    app_deps: dict[str, str | int] = {
         "api_key": "secret_abc123xyz",
         "base_url": "https://api.example.com",
         "api_version": "v2",
@@ -119,7 +119,7 @@ async def main() -> None:
     }
 
     print("依存性:")
-    print(f"  - api_key: {app_deps['api_key'][:3]}... (masked)")
+    print(f"  - api_key: {str(app_deps['api_key'])[:3]}... (masked)")
     print(f"  - base_url: {app_deps['base_url']}")
     print(f"  - api_version: {app_deps['api_version']}")
     print(f"  - timeout: {app_deps['timeout']}")
