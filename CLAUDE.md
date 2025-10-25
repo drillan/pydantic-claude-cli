@@ -161,40 +161,9 @@ This project strongly recommends comprehensive docstring usage:
 
 ## Documentation
 
-Documentation is built with **Sphinx** + **MyST-Parser** (Markdown support) + **Mermaid** diagrams.
+@.claude/docs.md
 
-### Building Docs
-```bash
-cd docs
-make html
-# Output: docs/_build/html/index.html
-
-# Or using uv directly
-uv run sphinx-build -M html docs docs/_build
-```
-
-### Documentation Guidelines
-
-**IMPORTANT**: Follow the documentation guidelines defined in `.claude/sphinx.md`.
-
-Key points:
-- **MyST syntax**: Write all documentation in [MyST](https://mystmd.org/guide) format
-- **Tone**: Avoid exaggerated expressions like "revolutionary", "groundbreaking"
-- **Emphasis**: Use `**bold**` sparingly, only when truly necessary
-- **Code block highlighting**: Be careful with syntax highlighter errors:
-  - ❌ TOML: Don't use `key = null` (use comments instead)
-  - ❌ JSON: Don't use ellipsis `...` in arrays/objects
-  - ❌ Unknown lexers: Use `text` or `bash` for unsupported file types
-  - ❌ Special characters: Avoid arrow symbols in code blocks
-
-**Build command**:
-```bash
-uv run sphinx-build -M html docs docs/_build
-```
-
-For detailed guidelines and common pitfalls, see `.claude/sphinx.md`.
-
-### Documentation
+### File Locations
 - All docs: `docs/*.md`
 - Sphinx config: `docs/conf.py`
 - Build system: `docs/Makefile`
