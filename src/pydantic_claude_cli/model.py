@@ -73,6 +73,8 @@ class ClaudeCodeCLIModel(Model):
         default=None, repr=False
     )  # Agent._function_toolsetへの参照
     _enable_experimental_deps: bool = field(default=False, repr=False)
+    _allowed_tools: list[str] | None = field(default=None, repr=False)
+    _disallowed_tools: list[str] | None = field(default=None, repr=False)
 
     def __init__(
         self,
@@ -87,6 +89,8 @@ class ClaudeCodeCLIModel(Model):
         permission_mode: Literal["default", "acceptEdits", "plan", "bypassPermissions"]
         | None = None,
         enable_experimental_deps: bool = False,
+        allowed_tools: list[str] | None = None,
+        disallowed_tools: list[str] | None = None,
     ):
         """Initialize Claude Code CLI model.
 
@@ -99,12 +103,20 @@ class ClaudeCodeCLIModel(Model):
             max_turns: Maximum number of conversation turns (passed to CLI).
             permission_mode: Permission mode for the CLI.
             enable_experimental_deps: Enable experimental dependency injection support (Milestone 3).
+            allowed_tools: List of tool names to allow. None means default behavior (minimal permissions).
+                Examples: ["WebSearch", "WebFetch", "Read"]
+            disallowed_tools: List of tool names to disallow.
+                Examples: ["Bash", "Write", "Edit"]
+                If both allowed_tools and disallowed_tools are specified,
+                disallowed_tools takes precedence (security first).
         """
         self._model_name = model_name
         self._cli_path = cli_path
         self._max_turns = max_turns
         self._permission_mode = permission_mode
         self._enable_experimental_deps = enable_experimental_deps
+        self._allowed_tools = allowed_tools
+        self._disallowed_tools = disallowed_tools
 
         if isinstance(provider, str):
             if provider == "claude-code-cli":
@@ -144,6 +156,60 @@ class ClaudeCodeCLIModel(Model):
             将来のバージョンで変更される可能性があります。
         """
         self._agent_toolsets = toolsets
+
+    def _resolve_tools(
+        self,
+        custom_tool_names: list[str],
+    ) -> tuple[list[str], list[str]]:
+        """ツール設定を解決する
+
+        Args:
+            custom_tool_names: カスタムツール名のリスト（MCPツール名）
+
+        Returns:
+            (final_allowed, final_disallowed): 最終的な許可/禁止ツールのリスト
+        """
+        allowed = self._allowed_tools
+        disallowed = self._disallowed_tools
+
+        # Step 1: ベースセットを決定
+        if allowed is not None:
+            # ユーザー指定 + カスタムツール
+            base_allowed = list(set(allowed + custom_tool_names))
+        elif custom_tool_names:
+            # カスタムツールのみ（デフォルト）
+            base_allowed = custom_tool_names
+        else:
+            # 何も許可しない（最もセキュア）
+            base_allowed = []
+
+        # Step 2: disallowedで除外（セキュリティ優先）
+        if disallowed:
+            final_allowed = [t for t in base_allowed if t not in disallowed]
+            final_disallowed = disallowed
+        else:
+            final_allowed = base_allowed
+            # カスタムツール使用時は組み込みツールをデフォルトで無効化
+            if custom_tool_names:
+                final_disallowed = [
+                    "Bash",
+                    "Read",
+                    "Write",
+                    "Edit",
+                    "Glob",
+                    "Grep",
+                    "WebFetch",
+                    "WebSearch",
+                    "Task",
+                ]
+                # ただしallowedで明示的に許可されたものは除外
+                final_disallowed = [
+                    t for t in final_disallowed if t not in final_allowed
+                ]
+            else:
+                final_disallowed = []
+
+        return final_allowed, final_disallowed
 
     async def request(
         self,
@@ -292,6 +358,9 @@ class ClaudeCodeCLIModel(Model):
 
         # MCPツールの許可設定
         # MCPツールは "mcp__{server_name}__{tool_name}" の形式で参照される
+        # _resolve_toolsを使ってユーザー設定を反映
+        final_allowed, final_disallowed = self._resolve_tools(custom_tool_names)
+
         options = ClaudeCodeOptions(
             model=self._model_name,
             system_prompt=system_prompt,
@@ -299,22 +368,10 @@ class ClaudeCodeCLIModel(Model):
             permission_mode=self._permission_mode,
             # MCPサーバー設定（カスタムツールがある場合のみ）
             mcp_servers={"custom": mcp_server} if mcp_server else {},
-            # MCPツールを明示的に許可（プレフィックス付き）
-            allowed_tools=custom_tool_names if custom_tool_names else [],
-            # 組み込みツールを無効化（MCPツールのみ使用）
-            disallowed_tools=[
-                "Bash",
-                "Read",
-                "Write",
-                "Edit",
-                "Glob",
-                "Grep",
-                "WebFetch",
-                "WebSearch",
-                "Task",
-            ]
-            if mcp_server
-            else [],
+            # ユーザー設定 + カスタムツールを許可
+            allowed_tools=final_allowed,
+            # ユーザー設定に基づいて無効化
+            disallowed_tools=final_disallowed,
         )
 
         # MCPツールがある場合はClaudeSDKClientを使用、ない場合はquery()を使用
