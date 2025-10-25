@@ -135,6 +135,82 @@ result = await agent.run("Get API key", deps={"api_key": "abc"})
 
 **詳細**: [実験的依存性サポート](experimental-deps.md)
 
+---
+
+## 組み込みツールの制御（v0.3+）
+
+Claude Code CLIの組み込みツール（WebSearch、Edit、Read等）を柔軟に制御できます。
+
+### ToolPresetを使用（推奨）
+
+```python
+from pydantic_claude_cli import ClaudeCodeCLIModel, ToolPreset
+
+model = ClaudeCodeCLIModel(
+    'claude-sonnet-4-5-20250929',
+    tool_preset=ToolPreset.WEB_ENABLED,  # WebSearch + WebFetch
+    permission_mode='acceptEdits'
+)
+```
+
+**利用可能なプリセット**:
+- `ToolPreset.WEB_ENABLED` - WebSearch + WebFetch
+- `ToolPreset.READ_ONLY` - Read + Glob + Grep
+- `ToolPreset.SAFE` - 読み込み + Web（Bashなし）
+- `ToolPreset.ALL` - すべての組み込みツール
+- `ToolPreset.NONE` - 組み込みツールなし
+
+### BuiltinTools定数を使用
+
+```python
+from pydantic_claude_cli import BuiltinTools
+
+model = ClaudeCodeCLIModel(
+    'claude-sonnet-4-5-20250929',
+    allowed_tools=BuiltinTools.WEB_TOOLS  # ["WebSearch", "WebFetch"]
+)
+```
+
+### 重要な注意事項
+
+**ツール使用はモデルの判断に依存**:
+
+`allowed_tools`を設定しても、Claudeモデルが自律的に「使う/使わない」を判断します。
+
+**より確実にツールを使わせるには**:
+1. **Sonnetモデル使用**（Haikuはツール判断が弱い）
+2. **明示的な指示**:
+   ```python
+   agent = Agent(
+       model,
+       instructions='必ずWebSearchツールを使用してください'
+   )
+   result = await agent.run('質問。必ずWebSearchを使用してください')
+   ```
+3. **permission_mode="acceptEdits"**：ツール使用を自動承認
+
+### カスタムツールと組み込みツールの併用
+
+```python
+model = ClaudeCodeCLIModel(
+    'claude-sonnet-4-5-20250929',
+    tool_preset=ToolPreset.WEB_ENABLED,
+    permission_mode='acceptEdits'
+)
+agent = Agent(model)
+model.set_agent_toolsets(agent._function_toolset)
+
+@agent.tool_plain
+def calculate(x: int, y: int) -> int:
+    return x + y
+
+# カスタムツール + WebSearchの両方が使える
+```
+
+**詳細**: README.mdの「組み込みツールの制御」セクション
+
+---
+
 #### Pydantic AI標準でのサポート
 
 **すべての機能が必要な場合**:

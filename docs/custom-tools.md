@@ -260,3 +260,54 @@ A: **実験的機能としてサポートされています**（v0.2+）
 **使い方**: [実験的依存性サポート](experimental-deps.md)
 
 **RunContextのすべての機能が必要な場合**: Pydantic AI標準（AnthropicModel）の使用を推奨します。
+
+### Q: 組み込みツール（WebSearch、Edit等）は使える？
+
+A: **はい、v0.3+で柔軟に制御可能です**
+
+**3つのアプローチ**:
+
+1. **ToolPreset使用**（推奨）:
+   ```python
+   from pydantic_claude_cli import ToolPreset
+
+   model = ClaudeCodeCLIModel(
+       'claude-sonnet-4-5-20250929',
+       tool_preset=ToolPreset.WEB_ENABLED
+   )
+   ```
+
+2. **BuiltinTools定数使用**:
+   ```python
+   from pydantic_claude_cli import BuiltinTools
+
+   model = ClaudeCodeCLIModel(
+       'claude-sonnet-4-5-20250929',
+       allowed_tools=BuiltinTools.WEB_TOOLS
+   )
+   ```
+
+3. **文字列で直接指定**:
+   ```python
+   model = ClaudeCodeCLIModel(
+       'claude-sonnet-4-5-20250929',
+       allowed_tools=["WebSearch", "WebFetch"]
+   )
+   ```
+
+**重要な注意事項**:
+- `allowed_tools`は「許可」であり「強制」ではありません
+- Claudeモデルが自律的にツール使用を判断します
+- より確実にツールを使わせるには：
+  - Sonnetモデル推奨（Haikuはツール判断が弱い）
+  - 明示的な指示（instructions + プロンプト）
+  - `permission_mode="acceptEdits"`
+
+**利用可能なプリセット**:
+- `ToolPreset.WEB_ENABLED` - WebSearch + WebFetch
+- `ToolPreset.READ_ONLY` - Read + Glob + Grep
+- `ToolPreset.SAFE` - 読み込み + Web（Bashなし）
+- `ToolPreset.ALL` - すべての組み込みツール
+- `ToolPreset.NONE` - 組み込みツールなし
+
+詳細: README.mdの「組み込みツールの制御」セクション

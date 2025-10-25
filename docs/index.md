@@ -16,6 +16,9 @@ Pydantic AI モデルプロバイダーを提供します。
 - ✅ **カスタムツールサポート**:
   - 依存性なしツール（v0.2+）
   - 実験的依存性サポート（v0.2+、シリアライズ可能な依存性のみ）
+- ✅ **組み込みツール制御**（v0.3+）:
+  - WebSearch、Edit、Read等を柔軟に制御
+  - ToolPresetとBuiltinTools定数で型安全に設定
 
 ## ドキュメント
 
@@ -103,6 +106,33 @@ print(result.data)
 **詳細ガイド**:
 - [カスタムツール](custom-tools.md) - 基本機能のガイド
 - [実験的依存性サポート](experimental-deps.md) - 実験的機能の使い方
+
+### 組み込みツールの制御（v0.3+）
+
+Claude Code CLIの組み込みツール（WebSearch、Edit、Read等）を柔軟に制御できます：
+
+```python
+from pydantic_claude_cli import ClaudeCodeCLIModel, ToolPreset
+
+# Web検索を有効化
+model = ClaudeCodeCLIModel(
+    'claude-sonnet-4-5-20250929',
+    tool_preset=ToolPreset.WEB_ENABLED,
+    permission_mode='acceptEdits'
+)
+agent = Agent(model)
+
+# WebSearchが使える
+result = await agent.run('最新の情報を教えてください')
+```
+
+**利用可能なプリセット**:
+- `ToolPreset.WEB_ENABLED` - WebSearch + WebFetch
+- `ToolPreset.READ_ONLY` - Read + Glob + Grep
+- `ToolPreset.SAFE` - 読み込み + Web（Bashなし）
+- `ToolPreset.ALL` - すべての組み込みツール
+
+**詳細**: [ユーザーガイド - 組み込みツールの制御](user-guide.md)
 
 ## リンク
 
