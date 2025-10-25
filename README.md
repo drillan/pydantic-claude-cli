@@ -1,15 +1,15 @@
 # pydantic-claude-cli
 
-**Pydantic AI用のClaude Code CLIアダプター** - APIキー不要でClaudeモデルを使用
+Pydantic AI用のClaude Code CLIアダプター
 
-このパッケージを使用すると、[Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)を介して[Pydantic AI](https://ai.pydantic.dev/)でClaudeモデルを使用でき、Anthropic APIキーが不要になります。
+このパッケージを使用すると、[Claude Code CLI](https://docs.anthropic.com/en/docs/claude-code)を介して[Pydantic AI](https://ai.pydantic.dev/)でClaudeモデルを使用できます。
 
 ## 特徴
 
 - ✅ **簡単統合** - Pydantic AIモデルのドロップイン置き換え
 - ✅ **テキストベース会話** - テキストチャットをサポート
-- ✅ **カスタムツール** - 依存性なしツールをサポート（v0.2+）
-- ✅ **実験的依存性サポート** - シリアライズ可能な依存性をサポート（実験的機能、v0.2+）
+- ✅ **カスタムツール** - 依存性なしツールをサポート
+- ✅ **実験的依存性サポート** - シリアライズ可能な依存性をサポート（実験的機能）
 - ⚠️ **マルチモーダル** - 画像/ファイル未対応
 
 ## 必要要件
@@ -36,10 +36,10 @@ claude login
 
 ```bash
 # uv使用（推奨）
-uv add pydantic-claude-cli
+uv add git+https://github.com/drillan/pydantic-claude-cli.git
 
 # またはpip使用
-pip install pydantic-claude-cli
+pip install git+https://github.com/drillan/pydantic-claude-cli.git
 ```
 
 ## クイックスタート
@@ -134,7 +134,7 @@ print(result.output)
 - ✅ 複数ツールの連携
 - ✅ 実際のツール呼び出し確認済み
 
-**実験的機能（v0.2+）**:
+**実験的機能**:
 - ✅ 依存性注入（RunContext + deps）のサポート
 - ✅ シリアライズ可能な依存性（dict, Pydanticモデル、dataclass）
 - ⚠️ 非シリアライズ可能な依存性（httpx, DB接続等）は未サポート
@@ -306,7 +306,7 @@ Claude Code CLIがサポートするすべてのClaudeモデルを使用でき�
 ### 対応済み機能
 
 - ✅ **テキストベースのQ&A** - テキスト会話をサポート
-- ✅ **カスタムツール（基本機能、v0.2+）** - 依存性なしツールが動作
+- ✅ **カスタムツール（基本機能）** - 依存性なしツールが動作
 - ✅ **システムプロンプト** - モデルへのカスタム指示
 - ✅ **会話履歴** - マルチターン会話
 - ✅ **エラーハンドリング** - 包括的なエラーメッセージ
@@ -353,7 +353,7 @@ git clone https://github.com/yourusername/pydantic-claude-cli.git
 cd pydantic-claude-cli
 
 # 開発用依存関係を含めてインストール
-uv sync --all-extras
+uv sync --all-groups
 
 # テスト実行
 uv run pytest
@@ -375,12 +375,12 @@ uv run python examples/basic_usage.py
    - プロセスエラー
    - 例外処理パターン
 
-3. **`custom_tools_basic.py`** - カスタムツールの基本（v0.2+）
+3. **`custom_tools_basic.py`** - カスタムツールの基本
    - 依存性なしツールの定義
    - ツール呼び出しの確認
    - 複数ツールの連携
 
-4. **`custom_tools_advanced.py`** - カスタムツールの高度な例（v0.2+）
+4. **`custom_tools_advanced.py`** - カスタムツールの高度な例
    - Pydanticモデルを引数に取るツール
    - 非同期ツール
    - 複雑なデータ処理
@@ -395,15 +395,15 @@ uv run python examples/basic_usage.py
    - ツール内でのlogfire.info()使用
    - 複数ツール連携のトレース
 
-7. **`websearch_with_preset.py`** - ToolPresetを使ったWeb検索（v0.3+）
+7. **`websearch_with_preset.py`** - ToolPresetを使ったWeb検索
    - ToolPreset.WEB_ENABLEDの使用
    - WebSearchツールによる最新情報取得
 
-8. **`websearch_with_builtin_tools.py`** - BuiltinTools定数の使用（v0.3+）
+8. **`websearch_with_builtin_tools.py`** - BuiltinTools定数の使用
    - BuiltinTools.WEB_TOOLSの使用
    - 型安全なツール指定
 
-9. **`read_search_write.py`** - Read + WebSearch + Write 統合例（v0.3+）
+9. **`read_search_write.py`** - Read + WebSearch + Write 統合例
    - 複数組み込みツールの連携
    - ファイル読み取り → Web検索 → ファイル書き込み
    - 実用的なワークフロー
