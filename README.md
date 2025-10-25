@@ -95,7 +95,7 @@ model = ClaudeCodeCLIModel(
 )
 ```
 
-### カスタムツールの使用（v0.2+）
+### カスタムツールの使用
 
 依存性なしツール（`@agent.tool_plain`）が動作します：
 
