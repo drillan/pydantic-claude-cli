@@ -24,6 +24,7 @@ Requirements:
     - You must be logged in to Claude Code
 """
 
+from .builtin_tools import BuiltinTools, ToolPreset
 from .claude_code_cli_agent import ClaudeCodeCLIAgent
 from .emulated_run_context import EmulatedRunContext
 from .exceptions import (
@@ -42,6 +43,9 @@ __all__ = [
     # Main exports
     "ClaudeCodeCLIModel",
     "ClaudeCodeCLIProvider",
+    # Tool utilities
+    "BuiltinTools",
+    "ToolPreset",
     # Experimental: Milestone 3 (Dependency injection support)
     "ClaudeCodeCLIAgent",
     "EmulatedRunContext",

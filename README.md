@@ -150,6 +150,77 @@ print(result.output)
 - [examples/custom_tools_basic.py](examples/custom_tools_basic.py)
 - [examples/experimental_deps_basic.py](examples/experimental_deps_basic.py)
 
+### 組み込みツールの制御
+
+Claude Code CLIの組み込みツール（WebSearch、Edit等）を柔軟に制御できます：
+
+#### パターン1: プリセットを使用（推奨）
+
+```python
+from pydantic_ai import Agent
+from pydantic_claude_cli import ClaudeCodeCLIModel, ToolPreset
+
+# Web検索を有効化
+model = ClaudeCodeCLIModel(
+    'claude-sonnet-4-5-20250929',
+    tool_preset=ToolPreset.WEB_ENABLED
+)
+agent = Agent(model)
+
+result = await agent.run('2025年10月25日時点で、日本の内閣総理大臣を教えてください')
+# → WebSearchが使える
+```
+
+**利用可能なプリセット**:
+- `ToolPreset.WEB_ENABLED` - Web検索とコンテンツ取得
+- `ToolPreset.READ_ONLY` - ファイル読み込みのみ
+- `ToolPreset.SAFE` - 読み込み + Web（Bashなし）
+- `ToolPreset.ALL` - すべての組み込みツール
+
+#### パターン2: BuiltinTools定数を使用
+
+```python
+from pydantic_claude_cli import ClaudeCodeCLIModel, BuiltinTools
+
+model = ClaudeCodeCLIModel(
+    'claude-sonnet-4-5-20250929',
+    allowed_tools=BuiltinTools.WEB_TOOLS  # ["WebSearch", "WebFetch"]
+)
+```
+
+**利用可能な定数**:
+- `BuiltinTools.WEB_TOOLS` - `["WebSearch", "WebFetch"]`
+- `BuiltinTools.FILE_READ_TOOLS` - `["Read", "Glob", "Grep"]`
+- `BuiltinTools.FILE_WRITE_TOOLS` - `["Write", "Edit"]`
+- `BuiltinTools.FILE_TOOLS` - すべてのファイル操作
+- `BuiltinTools.CODE_TOOLS` - `["Bash", "Task"]`
+
+#### パターン3: 文字列で直接指定
+
+```python
+model = ClaudeCodeCLIModel(
+    'claude-sonnet-4-5-20250929',
+    allowed_tools=["WebSearch", "WebFetch", "Read"]
+)
+```
+
+#### パターン4: カスタムツールと組み込みツールの併用
+
+```python
+model = ClaudeCodeCLIModel(
+    'claude-sonnet-4-5-20250929',
+    tool_preset=ToolPreset.WEB_ENABLED  # ベース設定
+)
+agent = Agent(model)
+model.set_agent_toolsets(agent._function_toolset)
+
+@agent.tool_plain
+def calculate(x: int, y: int) -> int:
+    return x + y
+
+# カスタムツール + WebSearchの両方が使える
+```
+
 ### エラーハンドリング
 
 ```python

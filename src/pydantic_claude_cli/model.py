@@ -19,6 +19,7 @@ from pydantic_ai import ModelProfile
 from pydantic_ai.messages import ModelMessage, ModelResponse
 from pydantic_ai.models import Model, ModelRequestParameters, ModelSettings
 
+from .builtin_tools import ToolPreset
 from .exceptions import (
     ClaudeCLIProcessError,
     MessageConversionError,
@@ -73,6 +74,7 @@ class ClaudeCodeCLIModel(Model):
         default=None, repr=False
     )  # Agent._function_toolsetへの参照
     _enable_experimental_deps: bool = field(default=False, repr=False)
+    _tool_preset: ToolPreset | str | None = field(default=None, repr=False)
     _allowed_tools: list[str] | None = field(default=None, repr=False)
     _disallowed_tools: list[str] | None = field(default=None, repr=False)
 
@@ -89,6 +91,7 @@ class ClaudeCodeCLIModel(Model):
         permission_mode: Literal["default", "acceptEdits", "plan", "bypassPermissions"]
         | None = None,
         enable_experimental_deps: bool = False,
+        tool_preset: ToolPreset | str | None = None,
         allowed_tools: list[str] | None = None,
         disallowed_tools: list[str] | None = None,
     ):
@@ -103,6 +106,9 @@ class ClaudeCodeCLIModel(Model):
             max_turns: Maximum number of conversation turns (passed to CLI).
             permission_mode: Permission mode for the CLI.
             enable_experimental_deps: Enable experimental dependency injection support (Milestone 3).
+            tool_preset: Preset tool configuration (e.g., ToolPreset.WEB_ENABLED).
+                This is applied as a base, and allowed_tools/disallowed_tools can further customize it.
+                Examples: ToolPreset.WEB_ENABLED, ToolPreset.SAFE, "web"
             allowed_tools: List of tool names to allow. None means default behavior (minimal permissions).
                 Examples: ["WebSearch", "WebFetch", "Read"]
             disallowed_tools: List of tool names to disallow.
@@ -115,6 +121,7 @@ class ClaudeCodeCLIModel(Model):
         self._max_turns = max_turns
         self._permission_mode = permission_mode
         self._enable_experimental_deps = enable_experimental_deps
+        self._tool_preset = tool_preset
         self._allowed_tools = allowed_tools
         self._disallowed_tools = disallowed_tools
 
@@ -168,14 +175,32 @@ class ClaudeCodeCLIModel(Model):
 
         Returns:
             (final_allowed, final_disallowed): 最終的な許可/禁止ツールのリスト
+
+        Note:
+            優先順位: tool_preset → allowed_tools → disallowed_tools
+            - tool_presetがベースとなる
+            - allowed_toolsで追加/上書き
+            - disallowed_toolsで除外（最優先）
         """
+        # Step 0: tool_presetから基本ツールリストを取得
+        preset_tools: list[str] = []
+        if self._tool_preset:
+            if isinstance(self._tool_preset, str):
+                preset = ToolPreset(self._tool_preset)
+            else:
+                preset = self._tool_preset
+            preset_tools = preset.get_allowed_tools()
+
         allowed = self._allowed_tools
         disallowed = self._disallowed_tools
 
         # Step 1: ベースセットを決定
         if allowed is not None:
-            # ユーザー指定 + カスタムツール
-            base_allowed = list(set(allowed + custom_tool_names))
+            # preset_tools + allowed_tools + custom_tools
+            base_allowed = list(set(preset_tools + allowed + custom_tool_names))
+        elif preset_tools:
+            # preset_tools + custom_tools
+            base_allowed = list(set(preset_tools + custom_tool_names))
         elif custom_tool_names:
             # カスタムツールのみ（デフォルト）
             base_allowed = custom_tool_names
