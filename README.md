@@ -245,6 +245,11 @@ agent = Agent(
 result = await agent.run('質問内容。必ずWebSearchを使用してください')  # 明示的要求
 ```
 
+**実用例**:
+- [examples/read_search_write.py](examples/read_search_write.py) - Read + WebSearch + Writeの統合例
+- [examples/websearch_with_preset.py](examples/websearch_with_preset.py) - ToolPreset使用例
+- [examples/websearch_with_builtin_tools.py](examples/websearch_with_builtin_tools.py) - BuiltinTools使用例
+
 ### エラーハンドリング
 
 ```python
@@ -389,6 +394,19 @@ uv run python examples/basic_usage.py
    - カスタムツールのトレーシング
    - ツール内でのlogfire.info()使用
    - 複数ツール連携のトレース
+
+7. **`websearch_with_preset.py`** - ToolPresetを使ったWeb検索（v0.3+）
+   - ToolPreset.WEB_ENABLEDの使用
+   - WebSearchツールによる最新情報取得
+
+8. **`websearch_with_builtin_tools.py`** - BuiltinTools定数の使用（v0.3+）
+   - BuiltinTools.WEB_TOOLSの使用
+   - 型安全なツール指定
+
+9. **`read_search_write.py`** - Read + WebSearch + Write 統合例（v0.3+）
+   - 複数組み込みツールの連携
+   - ファイル読み取り → Web検索 → ファイル書き込み
+   - 実用的なワークフロー
 
 すべてのサンプルは動作確認済みです。
 
