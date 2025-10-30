@@ -1,4 +1,15 @@
-# 本家Pydantic AIとの機能差分調査：実装が容易な未実装機能の提案
+# [001] 本家Pydantic AIとの機能差分調査：実装が容易な未実装機能の提案
+
+**Status**: Open
+**Priority**: High
+**Labels**: `enhancement`, `documentation`, `help wanted`
+**Assignee**: (未割当)
+**Related Issues**: (なし)
+**GitHub Issue**: (未作成)
+**Created**: 2025-10-30
+**Updated**: 2025-10-30
+
+---
 
 ## 概要
 
