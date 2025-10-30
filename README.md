@@ -95,6 +95,35 @@ model = ClaudeCodeCLIModel(
 )
 ```
 
+### ModelSettingsの使用（実験的機能）
+
+`temperature`、`max_tokens`、`top_p`等のモデルパラメータを設定できます：
+
+```python
+from pydantic_ai import Agent
+from pydantic_ai.models import ModelSettings
+from pydantic_claude_cli import ClaudeCodeCLIModel
+
+# ModelSettingsを指定してモデルを作成
+model = ClaudeCodeCLIModel(
+    'claude-haiku-4-5',
+    settings=ModelSettings(
+        temperature=0.7,    # 応答のランダム性を制御
+        max_tokens=1000,    # 最大トークン数
+        top_p=0.9,          # 確率分布の閾値
+    )
+)
+
+agent = Agent(model, instructions='簡潔に答えてください')
+result = await agent.run('創造的な物語を書いて')
+print(result.output)
+```
+
+**注意**:
+- この機能は実験的です（`extra_args`経由でCLIに渡します）
+- Claude Code CLIがこれらのパラメータをサポートしているかは未確認
+- サポートされているパラメータ: `temperature`, `max_tokens`, `top_p`
+
 ### カスタムツールの使用
 
 依存性なしツール（`@agent.tool_plain`）が動作します：
