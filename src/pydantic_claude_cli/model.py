@@ -236,6 +236,48 @@ class ClaudeCodeCLIModel(Model):
 
         return final_allowed, final_disallowed
 
+    def _extract_model_settings(
+        self, model_settings: ModelSettings | None
+    ) -> dict[str, str | None]:
+        """ModelSettingsからClaude Code SDK対応パラメータを抽出
+
+        Args:
+            model_settings: Pydantic AIのModelSettings
+
+        Returns:
+            Claude Code CLIに渡すextra_args用の辞書（値は文字列）
+
+        Note:
+            Claude Code SDKのClaudeCodeOptionsには直接temperature等のパラメータがないため、
+            extra_argsを介して渡す。実際にCLIがサポートしているかは不明だが、試験的に実装。
+        """
+        if not model_settings:
+            return {}
+
+        params: dict[str, str | None] = {}
+        supported = ["temperature", "max_tokens", "top_p"]
+
+        for key in supported:
+            # ModelSettingsはdict-likeなのでget()を使用
+            value = model_settings.get(key)
+            if value is not None:
+                # extra_argsは dict[str, str | None] なので文字列に変換
+                params[key] = str(value)
+                logger.debug(
+                    f"Extracted model setting: {key}={value} (will be passed via extra_args)"
+                )
+
+        if params:
+            logger.info(
+                f"Model settings will be passed to Claude Code CLI via extra_args: {params}"
+            )
+            logger.warning(
+                "Model settings support is experimental. "
+                "Claude Code CLI may not support all parameters (temperature, max_tokens, top_p)."
+            )
+
+        return params
+
     async def request(
         self,
         messages: list[ModelMessage],
@@ -386,6 +428,9 @@ class ClaudeCodeCLIModel(Model):
         # _resolve_toolsを使ってユーザー設定を反映
         final_allowed, final_disallowed = self._resolve_tools(custom_tool_names)
 
+        # ModelSettingsからパラメータを抽出
+        model_params = self._extract_model_settings(model_settings)
+
         options = ClaudeCodeOptions(
             model=self._model_name,
             system_prompt=system_prompt,
@@ -397,6 +442,8 @@ class ClaudeCodeCLIModel(Model):
             allowed_tools=final_allowed,
             # ユーザー設定に基づいて無効化
             disallowed_tools=final_disallowed,
+            # ModelSettingsをextra_argsとして渡す（実験的機能）
+            extra_args=model_params,
         )
 
         # MCPツールがある場合はClaudeSDKClientを使用、ない場合はquery()を使用
