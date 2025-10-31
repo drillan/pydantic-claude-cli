@@ -60,7 +60,7 @@ async def main():
     )
 
     # クエリ実行
-    result = await agent.run('こんにちは、Claude')
+    result = agent.run_sync('こんにちは、Claude')
     print(result.output)
 
 if __name__ == '__main__':
@@ -78,7 +78,7 @@ from pydantic_claude_cli import ClaudeCodeCLIModel
 model = ClaudeCodeCLIModel('claude-haiku-4-5')
 agent = Agent(model, instructions='簡潔で親切に答えてください。')
 
-result = await agent.run('量子コンピューティングを一文で説明してください。')
+result = agent.run_sync('量子コンピューティングを一文で説明してください。')
 print(result.output)
 ```
 
@@ -121,7 +121,7 @@ def format_currency(amount: float, currency: str = "JPY") -> str:
     return f"{amount:,.0f} {currency}"
 
 # 実行
-result = await agent.run('100円、200円、300円の合計を通貨形式で表示して')
+result = agent.run_sync('100円、200円、300円の合計を通貨形式で表示して')
 print(result.output)
 ```
 
@@ -167,7 +167,7 @@ model = ClaudeCodeCLIModel(
 )
 agent = Agent(model)
 
-result = await agent.run('2025年10月25日時点で、日本の内閣総理大臣を教えてください')
+result = agent.run_sync('2025年10月25日時点で、日本の内閣総理大臣を教えてください')
 # → WebSearchが使える
 ```
 
@@ -242,7 +242,7 @@ agent = Agent(
     model,
     instructions='必要に応じてWebSearchツールを使用してください'  # 明示的指示
 )
-result = await agent.run('質問内容。必ずWebSearchを使用してください')  # 明示的要求
+result = agent.run_sync('質問内容。必ずWebSearchを使用してください')  # 明示的要求
 ```
 
 **実用例**:
@@ -263,7 +263,7 @@ from pydantic_claude_cli import (
 try:
     model = ClaudeCodeCLIModel('claude-haiku-4-5')
     agent = Agent(model)
-    result = await agent.run('こんにちは')
+    result = agent.run_sync('こんにちは')
 except ClaudeCLINotFoundError:
     print('Claude CLIが見つかりません。インストールしてください。')
 except ClaudeCLIProcessError as e:
