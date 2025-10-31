@@ -36,10 +36,10 @@ claude login
 
 ```bash
 # uv使用（推奨）
-uv add git+https://github.com/drillan/pydantic-claude-cli.git
+uv add git+https://github.com/drillan/pydantic-claude-cli
 
 # またはpip使用
-pip install git+https://github.com/drillan/pydantic-claude-cli.git
+pip install git+https://github.com/drillan/pydantic-claude-cli
 ```
 
 ## クイックスタート
